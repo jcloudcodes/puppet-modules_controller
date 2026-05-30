@@ -1,5 +1,6 @@
 ---
 tom_cat::base_dir: '/jcloudcodes'
+tom_cat::tomcat_home: '/jcloudcodes/cbtom-cat'
 tom_cat::install_dir: '/jcloudcodes/cbtom-cat/data'
 tom_cat::java_root: '/jcloudcodes/cbtomcat-java'
 tom_cat::service_name: 'tomcat'

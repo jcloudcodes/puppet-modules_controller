@@ -8,11 +8,11 @@ User=<%= $tomcat_user %>
 Group=<%= $tomcat_group %>
 Environment=JAVA_HOME=<%= $java_home %>
 Environment=CATALINA_PID=<%= $install_dir %>/temp/tomcat.pid
-Environment=CATALINA_HOME=<%= $install_dir %>
+Environment=CATALINA_HOME=<%= $tomcat_home %>
 Environment=CATALINA_BASE=<%= $install_dir %>
 Environment=PATH=<%= $java_home %>/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/bin/bash <%= $install_dir %>/bin/startup.sh
-ExecStop=/bin/bash <%= $install_dir %>/bin/shutdown.sh
+ExecStart=/bin/bash <%= $tomcat_home %>/bin/startup.sh
+ExecStop=/bin/bash <%= $tomcat_home %>/bin/shutdown.sh
 SuccessExitStatus=143
 Restart=on-failure
 

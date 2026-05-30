@@ -3,6 +3,7 @@ class tom_cat::upgrade (
   String              $tom_version,
   String              $java_version,
   String              $base_dir,
+  String              $tomcat_home,
   String              $install_dir,
   String              $service_name,
   String              $tomcat_user,
@@ -19,16 +20,16 @@ class tom_cat::upgrade (
       path    => ['/usr/bin', '/bin'],
       onlyif  => [
         "/bin/systemctl is-active --quiet ${service_name}",
-        "/usr/bin/test -d ${install_dir}",
+        "/usr/bin/test -d ${tomcat_home}",
       ],
-      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
+      unless  => "/bin/bash -c 'test -f ${tomcat_home}/.tomcat_version && grep -qx \"${tom_version}\" ${tomcat_home}/.tomcat_version'",
     }
 
     exec { 'backup_existing_tomcat_linux':
-      command => "/bin/tar -czf /opt/backups/${service_name}-${timestamp}.tar.gz ${install_dir}",
+      command => "/bin/tar -czf /opt/backups/${service_name}-${timestamp}.tar.gz ${tomcat_home} ${install_dir}",
       path    => ['/usr/bin', '/bin'],
-      onlyif  => "/usr/bin/test -d ${install_dir}",
-      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
+      onlyif  => "/usr/bin/test -d ${tomcat_home}",
+      unless  => "/bin/bash -c 'test -f ${tomcat_home}/.tomcat_version && grep -qx \"${tom_version}\" ${tomcat_home}/.tomcat_version'",
       require => Exec['stop_tomcat_before_upgrade_linux'],
     }
 

@@ -2,6 +2,7 @@ class tom_cat::config (
   Enum['prod', 'dev'] $environment,
   String              $tom_version,
   String              $java_version,
+  String              $tomcat_home,
   String              $install_dir,
   String              $java_root,
   String              $service_name,
@@ -21,7 +22,7 @@ class tom_cat::config (
       path => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     }
 
-    $tomcat_java_link = "${install_dir}/tomcat-java"
+    $tomcat_java_link = "${tomcat_home}/tomcat-java"
     $corretto_home    = "${java_root}/amazon-corretto-${java_version}-linux-x64"
 
     file { $tomcat_java_link:
@@ -34,6 +35,7 @@ class tom_cat::config (
       ensure  => file,
       content => epp('tom_cat/setenv.sh.epp', {
         java_home   => $tomcat_java_link,
+        tomcat_home => $tomcat_home,
         install_dir => $install_dir,
       }),
       owner   => $tomcat_user,
@@ -70,6 +72,7 @@ class tom_cat::config (
       ensure  => file,
       content => epp('tom_cat/tomcat.service.epp', {
         service_name  => $service_name,
+        tomcat_home   => $tomcat_home,
         install_dir   => $install_dir,
         tomcat_user   => $tomcat_user,
         tomcat_group  => $tomcat_group,
@@ -93,6 +96,7 @@ class tom_cat::config (
       ensure  => file,
       content => epp('tom_cat/setenv.bat.epp', {
         java_version => $java_version,
+        tomcat_home  => $windows_install_dir,
         install_dir  => $windows_install_dir,
       }),
     }

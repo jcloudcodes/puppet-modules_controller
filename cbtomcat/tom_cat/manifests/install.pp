@@ -4,6 +4,7 @@ class tom_cat::install (
   String              $java_version,
   String              $nexus_url,
   String              $base_dir,
+  String              $tomcat_home,
   String              $install_dir,
   String              $java_root,
   String              $service_name,
@@ -48,7 +49,7 @@ class tom_cat::install (
       mode   => '0755',
     }
 
-    file { $install_dir:
+    file { $tomcat_home:
       ensure => directory,
       owner  => $tomcat_user,
       group  => $tomcat_group,
@@ -57,6 +58,14 @@ class tom_cat::install (
         File[$base_dir],
         User[$tomcat_user],
       ],
+    }
+
+    file { $install_dir:
+      ensure => directory,
+      owner  => $tomcat_user,
+      group  => $tomcat_group,
+      mode   => '0755',
+      require => File[$tomcat_home],
     }
 
     exec { 'download_corretto_linux':
@@ -79,20 +88,38 @@ class tom_cat::install (
 
     exec { 'download_tomcat_linux':
       command => "curl -L -o ${tomcat_download} ${tomcat_source_url}",
-      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
-      require => File[$install_dir],
+      unless  => "/bin/bash -c 'test -f ${tomcat_home}/.tomcat_version && grep -qx \"${tom_version}\" ${tomcat_home}/.tomcat_version'",
+      require => File[$tomcat_home],
     }
 
     exec { 'cleanup_existing_tomcat_linux':
-      command => "/bin/bash -c 'find ${install_dir} -mindepth 1 -maxdepth 1 -exec rm -rf {} +'",
-      unless  => "/bin/bash -c 'test -f ${install_dir}/RELEASE-NOTES && grep -q \"Apache Tomcat Version ${tom_version}\" ${install_dir}/RELEASE-NOTES'",
+      command => "/bin/bash -c 'find ${tomcat_home} -mindepth 1 -maxdepth 1 -exec rm -rf {} +'",
+      unless  => "/bin/bash -c 'test -f ${tomcat_home}/RELEASE-NOTES && grep -q \"Apache Tomcat Version ${tom_version}\" ${tomcat_home}/RELEASE-NOTES'",
       require => Exec['download_tomcat_linux'],
     }
 
     exec { 'extract_tomcat_linux':
-      command => "/bin/bash -c 'tar -xzf ${tomcat_download} --strip-components=1 -C ${install_dir} && echo ${tom_version} > ${install_dir}/.tomcat_version'",
-      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
+      command => "/bin/bash -c 'tar -xzf ${tomcat_download} --strip-components=1 -C ${tomcat_home} && echo ${tom_version} > ${tomcat_home}/.tomcat_version'",
+      unless  => "/bin/bash -c 'test -f ${tomcat_home}/.tomcat_version && grep -qx \"${tom_version}\" ${tomcat_home}/.tomcat_version'",
       require => Exec['cleanup_existing_tomcat_linux'],
+    }
+
+    exec { 'seed_tomcat_base_conf_linux':
+      command => "/bin/bash -c 'mkdir -p ${install_dir}/conf && cp -a ${tomcat_home}/conf/. ${install_dir}/conf/'",
+      unless  => "test -f ${install_dir}/conf/server.xml",
+      require => [
+        Exec['extract_tomcat_linux'],
+        File[$install_dir],
+      ],
+    }
+
+    exec { 'seed_tomcat_base_webapps_linux':
+      command => "/bin/bash -c 'mkdir -p ${install_dir}/webapps && cp -a ${tomcat_home}/webapps/. ${install_dir}/webapps/'",
+      unless  => "test -d ${install_dir}/webapps/manager",
+      require => [
+        Exec['extract_tomcat_linux'],
+        File[$install_dir],
+      ],
     }
 
     file { [
@@ -100,19 +127,20 @@ class tom_cat::install (
       "${install_dir}/temp",
       "${install_dir}/work",
       "${install_dir}/webapps",
+      "${install_dir}/bin",
     ]:
       ensure  => directory,
       recurse => false,
       owner   => $tomcat_user,
       group   => $tomcat_group,
       mode    => '0755',
-      require => Exec['extract_tomcat_linux'],
+      require => File[$install_dir],
     }
 
     file { [
-      "${install_dir}/bin/catalina.sh",
-      "${install_dir}/bin/startup.sh",
-      "${install_dir}/bin/shutdown.sh",
+      "${tomcat_home}/bin/catalina.sh",
+      "${tomcat_home}/bin/startup.sh",
+      "${tomcat_home}/bin/shutdown.sh",
     ]:
       ensure  => file,
       owner   => $tomcat_user,
@@ -122,9 +150,13 @@ class tom_cat::install (
     }
 
     exec { 'set_tomcat_permissions':
-      command => "chown -R ${tomcat_user}:${tomcat_group} ${install_dir}",
-      unless  => "/bin/bash -c 'test \"$(stat -c %U ${install_dir})\" = \"${tomcat_user}\" && test \"$(stat -c %G ${install_dir})\" = \"${tomcat_group}\"'",
-      require => Exec['extract_tomcat_linux'],
+      command => "chown -R ${tomcat_user}:${tomcat_group} ${tomcat_home} ${install_dir}",
+      unless  => "/bin/bash -c 'test \"$(stat -c %U ${tomcat_home})\" = \"${tomcat_user}\" && test \"$(stat -c %G ${tomcat_home})\" = \"${tomcat_group}\" && test \"$(stat -c %U ${install_dir})\" = \"${tomcat_user}\" && test \"$(stat -c %G ${install_dir})\" = \"${tomcat_group}\"'",
+      require => [
+        Exec['extract_tomcat_linux'],
+        Exec['seed_tomcat_base_conf_linux'],
+        Exec['seed_tomcat_base_webapps_linux'],
+      ],
     }
 
     exec { 'cleanup_tomcat_download_linux':

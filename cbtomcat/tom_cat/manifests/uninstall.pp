@@ -3,6 +3,7 @@ class tom_cat::uninstall (
   String              $tom_version,
   String              $java_version,
   String              $base_dir,
+  String              $tomcat_home,
   String              $install_dir,
   String              $java_root,
   String              $service_name,
@@ -32,15 +33,9 @@ class tom_cat::uninstall (
       refreshonly => true,
     }
 
-    file { $install_dir:
+    file { $tomcat_home:
       ensure => absent,
       force  => true,
-    }
-
-    file { $corretto_extract_dir:
-      ensure  => absent,
-      recurse => true,
-      force   => true,
     }
 
     file { $java_root:

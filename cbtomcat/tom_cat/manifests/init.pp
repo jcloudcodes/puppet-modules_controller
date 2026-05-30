@@ -7,6 +7,7 @@ class tom_cat (
 
   # Values from Hiera/common.yaml
   $base_dir            = lookup('tom_cat::base_dir')
+  $tomcat_home         = lookup('tom_cat::tomcat_home')
   $install_dir         = lookup('tom_cat::install_dir')
   $java_root           = lookup('tom_cat::java_root')
   $service_name        = lookup('tom_cat::service_name')
@@ -27,6 +28,7 @@ class tom_cat (
       tom_version         => $tom_version,
       java_version        => $java_version,
       base_dir            => $base_dir,
+      tomcat_home         => $tomcat_home,
       install_dir         => $install_dir,
       java_root           => $java_root,
       service_name        => $service_name,
@@ -48,6 +50,7 @@ class tom_cat (
       tom_version         => $tom_version,
       java_version        => $java_version,
       base_dir            => $base_dir,
+      tomcat_home         => $tomcat_home,
       install_dir         => $install_dir,
       service_name        => $service_name,
       tomcat_user         => $tomcat_user,
@@ -61,6 +64,7 @@ class tom_cat (
       java_version        => $java_version,
       nexus_url           => $nexus_url,
       base_dir            => $base_dir,
+      tomcat_home         => $tomcat_home,
       install_dir         => $install_dir,
       java_root           => $java_root,
       service_name        => $service_name,
@@ -73,6 +77,7 @@ class tom_cat (
       environment         => $environment,
       tom_version         => $tom_version,
       java_version        => $java_version,
+      tomcat_home         => $tomcat_home,
       install_dir         => $install_dir,
       java_root           => $java_root,
       service_name        => $service_name,
@@ -88,6 +93,7 @@ class tom_cat (
 
     -> class { 'tom_cat::service':
       service_name        => $service_name,
+      tomcat_home         => $tomcat_home,
       install_dir         => $install_dir,
       windows_install_dir => $windows_install_dir,
     }
