@@ -30,24 +30,27 @@ class tom_cat::uninstall (
 
     file { "/etc/systemd/system/${service_name}.service":
       ensure => absent,
+      notify => Exec['systemd_daemon_reload_uninstall'],
     }
 
     exec { 'systemd_daemon_reload_uninstall':
       command     => '/bin/systemctl daemon-reload',
       path        => ['/usr/bin', '/bin'],
-      require     => File["/etc/systemd/system/${service_name}.service"],
+      refreshonly => true,
+      notify      => Exec['systemd_reset_failed_uninstall'],
     }
 
     exec { 'systemd_reset_failed_uninstall':
-      command => "/bin/bash -c '/bin/systemctl reset-failed ${service_name} || true'",
-      path    => ['/usr/bin', '/bin'],
-      require => Exec['systemd_daemon_reload_uninstall'],
+      command     => "/bin/bash -c '/bin/systemctl reset-failed ${service_name} || true'",
+      path        => ['/usr/bin', '/bin'],
+      refreshonly => true,
+      notify      => Exec['systemd_daemon_reexec_uninstall'],
     }
 
     exec { 'systemd_daemon_reexec_uninstall':
-      command => '/bin/systemctl daemon-reexec',
-      path    => ['/usr/bin', '/bin'],
-      require => Exec['systemd_reset_failed_uninstall'],
+      command     => '/bin/systemctl daemon-reexec',
+      path        => ['/usr/bin', '/bin'],
+      refreshonly => true,
     }
 
     file { $tomcat_home:
@@ -55,7 +58,7 @@ class tom_cat::uninstall (
       force  => true,
       require => [
         File["${install_dir}/temp/tomcat.pid"],
-        Exec['systemd_daemon_reexec_uninstall'],
+        Exec['systemd_daemon_reload_uninstall'],
       ],
     }
 
