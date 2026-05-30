@@ -4,9 +4,15 @@ class tom_cat::uninstall (
   String              $java_version,
   String              $base_dir,
   String              $install_dir,
+  String              $java_root,
   String              $service_name,
   String              $windows_install_dir,
 ) {
+
+  $tomcat_package         = "apache-tomcat-${tom_version}"
+  $corretto_major_version = regsubst($java_version, '^([0-9]+).*$', '\1')
+  $corretto_archive       = "amazon-corretto-${corretto_major_version}-x64-linux-jdk.tar.gz"
+  $corretto_extract_dir   = "${java_root}/amazon-corretto-${java_version}-linux-x64"
 
   if $facts['kernel'] == 'Linux' {
 
@@ -31,14 +37,30 @@ class tom_cat::uninstall (
       force  => true,
     }
 
-    file { "${base_dir}/apache-tomcat-${tom_version}":
+    file { $corretto_extract_dir:
       ensure  => absent,
       recurse => true,
       force   => true,
     }
 
-    file { "/tmp/apache-tomcat-${tom_version}.tar.gz":
+    file { $java_root:
+      ensure  => absent,
+      recurse => true,
+      force   => true,
+    }
+
+    file { "/tmp/${tomcat_package}.tar.gz":
       ensure => absent,
+    }
+
+    file { "/tmp/${corretto_archive}":
+      ensure => absent,
+    }
+
+    exec { 'remove_tomcat_backup_archives_linux':
+      command => "/bin/bash -c 'rm -f /opt/backups/${service_name}-*.tar.gz'",
+      onlyif  => "/bin/bash -c 'compgen -G \"/opt/backups/${service_name}-*.tar.gz\" > /dev/null'",
+      path    => ['/usr/bin', '/bin'],
     }
 
   } elsif $facts['kernel'] == 'windows' {

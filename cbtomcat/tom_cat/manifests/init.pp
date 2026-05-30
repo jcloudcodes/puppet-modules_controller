@@ -28,6 +28,7 @@ class tom_cat (
       java_version        => $java_version,
       base_dir            => $base_dir,
       install_dir         => $install_dir,
+      java_root           => $java_root,
       service_name        => $service_name,
       windows_install_dir => $windows_install_dir,
     }
