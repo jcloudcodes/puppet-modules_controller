@@ -12,10 +12,12 @@ class tom_cat::nginx (
   String $tomcat_port = '8085',
 ) {
 
+  # Install NGINX package.
   package { 'nginx':
     ensure => installed,
   }
 
+  # Manage Tomcat NGINX reverse proxy config.
   file { '/etc/nginx/conf.d/tomcat.conf':
     ensure  => file,
     owner   => 'root',
@@ -40,12 +42,12 @@ server {
 
         proxy_http_version 1.1;
 
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $$host;
+        proxy_set_header X-Real-IP $$remote_addr;
+        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $$scheme;
 
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $$http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_read_timeout 3600;
@@ -54,16 +56,18 @@ server {
 }
 | EOF
     require => Package['nginx'],
-    notify  => Service['nginx'],
+    notify  => Exec['validate_tomcat_nginx_config'],
   }
 
+  # Validate NGINX configuration before restarting service.
   exec { 'validate_tomcat_nginx_config':
     command     => 'nginx -t',
     refreshonly => true,
     subscribe   => File['/etc/nginx/conf.d/tomcat.conf'],
-    before      => Service['nginx'],
+    notify      => Service['nginx'],
   }
 
+  # Enable and start NGINX service.
   service { 'nginx':
     ensure     => running,
     enable     => true,
