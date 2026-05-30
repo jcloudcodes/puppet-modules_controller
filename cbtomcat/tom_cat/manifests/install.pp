@@ -118,10 +118,22 @@ class tom_cat::install (
       ],
     }
 
+    exec { 'seed_default_webapps_linux':
+      command => "/bin/bash -c 'mkdir -p ${install_dir}/webapps && rsync -a ${tomcat_staging_dir}/webapps/ ${install_dir}/webapps/'",
+      unless  => "test -d ${install_dir}/webapps/manager",
+      require => [
+        Package['rsync'],
+        Exec['extract_tomcat_linux'],
+      ],
+    }
+
     exec { 'cleanup_tomcat_download_linux':
       command => "/bin/bash -c 'rm -f ${tomcat_download} && rm -rf ${tomcat_staging_dir}'",
       onlyif  => "/bin/bash -c 'test -f ${tomcat_download} || test -d ${tomcat_staging_dir}'",
-      require => Exec['sync_tomcat_runtime_linux'],
+      require => [
+        Exec['sync_tomcat_runtime_linux'],
+        Exec['seed_default_webapps_linux'],
+      ],
     }
 
   } elsif $facts['kernel'] == 'windows' {
