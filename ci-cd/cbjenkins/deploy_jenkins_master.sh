@@ -5,6 +5,16 @@ MODULE_DIR="/etc/puppetlabs/code/environments/production/modules/jenkins_master"
 
 cd "${MODULE_DIR}"
 
+echo "Deployment timestamp: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+echo "Target module directory: ${MODULE_DIR}"
+echo "GitHub revision: ${GITHUB_SHA:-unknown}"
+
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Remote git revision: $(git rev-parse HEAD)"
+else
+  echo "Remote git revision: unavailable (module path is not a git checkout)"
+fi
+
 echo "Running Puppet validation for jenkins_master..."
 
 if command -v puppet >/dev/null 2>&1; then

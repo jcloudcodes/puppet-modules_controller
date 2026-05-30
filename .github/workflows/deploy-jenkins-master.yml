@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - 'cbjenkins/jenkins_master/**'
       - '.github/workflows/deploy-jenkins-master.yml'
@@ -32,6 +33,13 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
 
+      - name: Backup existing remote module
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" \
+            "if [ -d ${REMOTE_PATH} ]; then backup_dir=/tmp/jenkins_master_backup_${GITHUB_SHA}_\$(date +%Y%m%d%H%M%S); mkdir -p \"\$backup_dir\"; rsync -az ${REMOTE_PATH}/ \"\$backup_dir\"/; echo \"Backup created at \$backup_dir\"; fi"
+
       - name: Sync Jenkins module to Puppet Foreman
         run: |
           ssh "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p ${REMOTE_PATH}"
@@ -46,6 +54,8 @@ jobs:
             "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_jenkins_master.sh"
 
       - name: Run remote deployment validation
+        env:
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           ssh "${REMOTE_USER}@${REMOTE_HOST}" \
-            "chmod +x /tmp/deploy_jenkins_master.sh && /bin/bash /tmp/deploy_jenkins_master.sh && rm -f /tmp/deploy_jenkins_master.sh"
+            "chmod +x /tmp/deploy_jenkins_master.sh && GITHUB_SHA=${GITHUB_SHA} /bin/bash /tmp/deploy_jenkins_master.sh && rm -f /tmp/deploy_jenkins_master.sh"

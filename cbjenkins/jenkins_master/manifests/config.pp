@@ -44,8 +44,8 @@ class jenkins_master::config (
   $je_java_options = "-server -Djava.awt.headless=true ${heap_size} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/jenkins"
 
   # Print useful debug information during Puppet run.
-  # notify { "config_file: ${config_file}": }
-  # notify { "jenkins_home: ${jenkins_home}": }
+  # notify { "config_file from remote: ${config_file}": }
+  # notify { "jenkins_home working: ${jenkins_home}": }
   # notify { "jenkins_java_cmd: ${jenkins_java_cmd}": }
   # notify { "corretto_home: ${corretto_home}": }
 
@@ -227,4 +227,3 @@ Environment="JENKINS_JAVA_OPTIONS=${je_java_options}"
     require => Class['jenkins_master::install'],
   }
 }
-
