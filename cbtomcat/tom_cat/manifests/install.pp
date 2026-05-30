@@ -120,6 +120,7 @@ class tom_cat::install (
 
     exec { 'seed_default_webapps_linux':
       command => "/bin/bash -c 'mkdir -p ${install_dir}/webapps && rsync -a ${tomcat_staging_dir}/webapps/ ${install_dir}/webapps/'",
+      onlyif  => "/bin/bash -c 'test -d ${tomcat_staging_dir}/webapps'",
       unless  => "test -d ${install_dir}/webapps/manager",
       require => [
         Package['rsync'],
