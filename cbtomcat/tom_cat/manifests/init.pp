@@ -1,18 +1,11 @@
 class tom_cat (
   Enum['prod', 'dev']          $environment  = 'prod',
   Enum['install', 'uninstall'] $action       = 'install',
-  Optional[String]             $tom_version  = undef,
-  Optional[String]             $java_version = undef,
+  Optional[String]             $tom_version  = '10.1.24',
+  Optional[String]             $java_version = '21.0.11.10.1',
 ) {
 
-  if $tom_version == undef or $tom_version == '' {
-    fail('Tomcat version is not set on console parameter')
-  }
-
-  if $java_version == undef or $java_version == '' {
-    fail('Java version is not set on console parameter')
-  }
-
+  # Values from Hiera/common.yaml
   $base_dir            = lookup('tom_cat::base_dir')
   $install_dir         = lookup('tom_cat::install_dir')
   $java_root           = lookup('tom_cat::java_root')
@@ -36,9 +29,18 @@ class tom_cat (
       service_name        => $service_name,
       windows_install_dir => $windows_install_dir,
     }
+
     contain tom_cat::uninstall
 
   } elsif $action == 'install' {
+
+    if $tom_version == undef or $tom_version == '' {
+      fail('Tomcat version is not set on console parameter')
+    }
+
+    if $java_version == undef or $java_version == '' {
+      fail('Java version is not set on console parameter')
+    }
 
     class { 'tom_cat::install':
       environment         => $environment,
@@ -53,6 +55,7 @@ class tom_cat (
       tomcat_group        => $tomcat_group,
       windows_install_dir => $windows_install_dir,
     }
+
     -> class { 'tom_cat::upgrade':
       environment         => $environment,
       tom_version         => $tom_version,
@@ -64,6 +67,7 @@ class tom_cat (
       tomcat_group        => $tomcat_group,
       windows_install_dir => $windows_install_dir,
     }
+
     -> class { 'tom_cat::config':
       environment         => $environment,
       tom_version         => $tom_version,
@@ -78,6 +82,7 @@ class tom_cat (
       redirect_port       => $redirect_port,
       windows_install_dir => $windows_install_dir,
     }
+
     -> class { 'tom_cat::service':
       service_name        => $service_name,
       install_dir         => $install_dir,
