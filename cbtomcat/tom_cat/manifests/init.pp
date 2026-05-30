@@ -42,7 +42,19 @@ class tom_cat (
       fail('Java version is not set on console parameter')
     }
 
-    class { 'tom_cat::install':
+    class { 'tom_cat::upgrade':
+      environment         => $environment,
+      tom_version         => $tom_version,
+      java_version        => $java_version,
+      base_dir            => $base_dir,
+      install_dir         => $install_dir,
+      service_name        => $service_name,
+      tomcat_user         => $tomcat_user,
+      tomcat_group        => $tomcat_group,
+      windows_install_dir => $windows_install_dir,
+    }
+
+    -> class { 'tom_cat::install':
       environment         => $environment,
       tom_version         => $tom_version,
       java_version        => $java_version,
@@ -50,18 +62,6 @@ class tom_cat (
       base_dir            => $base_dir,
       install_dir         => $install_dir,
       java_root           => $java_root,
-      service_name        => $service_name,
-      tomcat_user         => $tomcat_user,
-      tomcat_group        => $tomcat_group,
-      windows_install_dir => $windows_install_dir,
-    }
-
-    -> class { 'tom_cat::upgrade':
-      environment         => $environment,
-      tom_version         => $tom_version,
-      java_version        => $java_version,
-      base_dir            => $base_dir,
-      install_dir         => $install_dir,
       service_name        => $service_name,
       tomcat_user         => $tomcat_user,
       tomcat_group        => $tomcat_group,

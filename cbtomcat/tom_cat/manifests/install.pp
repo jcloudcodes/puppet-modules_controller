@@ -41,16 +41,27 @@ class tom_cat::install (
       require    => Group[$tomcat_group],
     }
 
-    file { [$base_dir, $java_root, $install_dir, '/opt/backups']:
+    file { [$base_dir, $java_root, '/opt/backups']:
       ensure => directory,
       owner  => 'root',
       group  => 'root',
       mode   => '0755',
     }
 
+    file { $install_dir:
+      ensure => directory,
+      owner  => $tomcat_user,
+      group  => $tomcat_group,
+      mode   => '0755',
+      require => [
+        File[$base_dir],
+        User[$tomcat_user],
+      ],
+    }
+
     exec { 'download_corretto_linux':
       command => "curl -L -o ${corretto_download} ${corretto_source_url}",
-      creates => $corretto_download,
+      unless  => "test -d ${corretto_extract_dir}",
       require => File[$java_root],
     }
 
@@ -68,7 +79,7 @@ class tom_cat::install (
 
     exec { 'download_tomcat_linux':
       command => "curl -L -o ${tomcat_download} ${tomcat_source_url}",
-      creates => $tomcat_download,
+      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
       require => File[$install_dir],
     }
 
@@ -112,7 +123,7 @@ class tom_cat::install (
 
     exec { 'set_tomcat_permissions':
       command => "chown -R ${tomcat_user}:${tomcat_group} ${install_dir}",
-      unless  => "/bin/bash -c 'test \"$(stat -c %U ${install_dir})\" = \"${tomcat_user}\"'",
+      unless  => "/bin/bash -c 'test \"$(stat -c %U ${install_dir})\" = \"${tomcat_user}\" && test \"$(stat -c %G ${install_dir})\" = \"${tomcat_group}\"'",
       require => Exec['extract_tomcat_linux'],
     }
 

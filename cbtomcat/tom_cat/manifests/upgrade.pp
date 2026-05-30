@@ -17,13 +17,18 @@ class tom_cat::upgrade (
     exec { 'stop_tomcat_before_upgrade_linux':
       command => "/bin/systemctl stop ${service_name}",
       path    => ['/usr/bin', '/bin'],
-      onlyif  => "/bin/systemctl is-active --quiet ${service_name}",
+      onlyif  => [
+        "/bin/systemctl is-active --quiet ${service_name}",
+        "/usr/bin/test -d ${install_dir}",
+      ],
+      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
     }
 
     exec { 'backup_existing_tomcat_linux':
       command => "/bin/tar -czf /opt/backups/${service_name}-${timestamp}.tar.gz ${install_dir}",
       path    => ['/usr/bin', '/bin'],
       onlyif  => "/usr/bin/test -d ${install_dir}",
+      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version'",
       require => Exec['stop_tomcat_before_upgrade_linux'],
     }
 
