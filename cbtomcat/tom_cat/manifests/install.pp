@@ -22,6 +22,7 @@ class tom_cat::install (
   $corretto_source_url    = "https://corretto.aws/downloads/latest/${corretto_archive}"
   $corretto_extract_dir   = "${java_root}/amazon-corretto-${java_version}-linux-x64"
   $tomcat_download        = "/tmp/${tomcat_package}.tar.gz"
+  $tomcat_staging_dir     = "/tmp/${tomcat_package}"
 
   if $facts['kernel'] == 'Linux' {
 
@@ -92,22 +93,28 @@ class tom_cat::install (
       require => File[$install_dir],
     }
 
-    exec { 'cleanup_existing_tomcat_linux':
-      command => "/bin/bash -c 'find ${install_dir} -mindepth 1 -maxdepth 1 -exec rm -rf {} +'",
-      unless  => "/bin/bash -c 'test -f ${install_dir}/RELEASE-NOTES && grep -q \"Apache Tomcat Version ${tom_version}\" ${install_dir}/RELEASE-NOTES && test -f ${install_dir}/bin/setclasspath.sh && test -f ${install_dir}/bin/bootstrap.jar'",
+    exec { 'prepare_tomcat_staging_linux':
+      command => "/bin/bash -c 'rm -rf ${tomcat_staging_dir} && mkdir -p ${tomcat_staging_dir}'",
+      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version && test -f ${install_dir}/bin/setclasspath.sh && test -f ${install_dir}/bin/bootstrap.jar'",
       require => Exec['download_tomcat_linux'],
     }
 
     exec { 'extract_tomcat_linux':
-      command => "/bin/bash -c 'tar -xzf ${tomcat_download} --strip-components=1 -C ${install_dir} && echo ${tom_version} > ${install_dir}/.tomcat_version'",
+      command => "/bin/bash -c 'tar -xzf ${tomcat_download} --strip-components=1 -C ${tomcat_staging_dir}'",
       unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version && test -f ${install_dir}/bin/setclasspath.sh && test -f ${install_dir}/bin/bootstrap.jar && test -f ${install_dir}/bin/catalina.sh && test -f ${install_dir}/bin/startup.sh && test -f ${install_dir}/bin/shutdown.sh'",
-      require => Exec['cleanup_existing_tomcat_linux'],
+      require => Exec['prepare_tomcat_staging_linux'],
+    }
+
+    exec { 'sync_tomcat_runtime_linux':
+      command => "/bin/bash -c 'rsync -a --delete --exclude webapps/ ${tomcat_staging_dir}/ ${install_dir}/ && echo ${tom_version} > ${install_dir}/.tomcat_version'",
+      unless  => "/bin/bash -c 'test -f ${install_dir}/.tomcat_version && grep -qx \"${tom_version}\" ${install_dir}/.tomcat_version && test -f ${install_dir}/bin/setclasspath.sh && test -f ${install_dir}/bin/bootstrap.jar && test -f ${install_dir}/bin/catalina.sh && test -f ${install_dir}/bin/startup.sh && test -f ${install_dir}/bin/shutdown.sh'",
+      require => Exec['extract_tomcat_linux'],
     }
 
     exec { 'cleanup_tomcat_download_linux':
-      command => "rm -f ${tomcat_download}",
-      onlyif  => "test -f ${tomcat_download}",
-      require => Exec['extract_tomcat_linux'],
+      command => "/bin/bash -c 'rm -f ${tomcat_download} && rm -rf ${tomcat_staging_dir}'",
+      onlyif  => "/bin/bash -c 'test -f ${tomcat_download} || test -d ${tomcat_staging_dir}'",
+      require => Exec['sync_tomcat_runtime_linux'],
     }
 
   } elsif $facts['kernel'] == 'windows' {
