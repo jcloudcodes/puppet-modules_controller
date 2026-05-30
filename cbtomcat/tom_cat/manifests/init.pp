@@ -30,8 +30,6 @@ class tom_cat (
       windows_install_dir => $windows_install_dir,
     }
 
-    contain tom_cat::uninstall
-
   } elsif $action == 'install' {
 
     if $tom_version == undef or $tom_version == '' {
@@ -88,11 +86,6 @@ class tom_cat (
       install_dir         => $install_dir,
       windows_install_dir => $windows_install_dir,
     }
-
-    contain tom_cat::install
-    contain tom_cat::upgrade
-    contain tom_cat::config
-    contain tom_cat::service
 
   } else {
     fail("Unsupported action: ${action}")
