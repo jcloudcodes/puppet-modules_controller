@@ -1,0 +1,51 @@
+name: Deploy Jenkins Master Puppet Module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cbjenkins/jenkins_master/**'
+      - '.github/workflows/deploy-jenkins-master.yml'
+      - 'ci-cd/cbjenkins/deploy_jenkins_master.sh'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Puppet Foreman
+    runs-on: ubuntu-latest
+    env:
+      MODULE_SOURCE: cbjenkins/jenkins_master
+      REMOTE_HOST: puppet.jcloudcodes.com
+      REMOTE_USER: ${{ secrets.PUPPET_FOREMAN_USER }}
+      REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/jenkins_master
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PUPPET_FOREMAN_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync Jenkins module to Puppet Foreman
+        run: |
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" "mkdir -p ${REMOTE_PATH}"
+          rsync -az --delete \
+            "$MODULE_SOURCE"/ \
+            "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}/"
+
+      - name: Copy remote deployment script
+        run: |
+          rsync -az \
+            "ci-cd/cbjenkins/deploy_jenkins_master.sh" \
+            "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_jenkins_master.sh"
+
+      - name: Run remote deployment validation
+        run: |
+          ssh "${REMOTE_USER}@${REMOTE_HOST}" \
+            "chmod +x /tmp/deploy_jenkins_master.sh && /bin/bash /tmp/deploy_jenkins_master.sh && rm -f /tmp/deploy_jenkins_master.sh"

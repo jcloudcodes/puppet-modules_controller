@@ -1,0 +1,4 @@
+<%= $agentname %>    soft    nofile    4096
+<%= $agentname %>    hard    nofile    8192
+<%= $agentname %>    soft    nproc     30654
+<%= $agentname %>    hard    nproc     30654

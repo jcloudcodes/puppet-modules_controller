@@ -1,0 +1,12 @@
+jenkins_master::http_port: '8080'
+jenkins_master::ajp_port: '-1'
+jenkins_master::manage_repo: true
+jenkins_master::manage_java: false
+jenkins_master::service_name: 'jenkins'
+jenkins_master::jenkins_user: 'jenkins'
+jenkins_master::listen_address: '0.0.0.0'
+jenkins_master::jenkins_package: 'jenkins'
+jenkins_master::jenkins_repo_key_id: '14ABFC68'
+jenkins_master::config_file: '/etc/sysconfig/jenkins'
+jenkins_master::jenkins_repo_baseurl: 'https://pkg.jenkins.io/rpm-stable'
+jenkins_master::jenkins_repo_gpg: 'https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key'

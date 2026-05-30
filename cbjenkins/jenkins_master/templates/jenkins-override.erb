@@ -1,0 +1,6 @@
+# templates/jenkins-override.erb
+[Service]
+Environment="JENKINS_HOME=<%= @jenkins_home %>"
+Environment="JAVA_HOME=<%= @jenkins_java_link %>"
+Environment="PATH=<%= @jenkins_java_link %>/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="JENKINS_JAVA_CMD=<%= @jenkins_java_link %>/bin/java"
