@@ -30,20 +30,19 @@ class tom_cat::uninstall (
 
     file { "/etc/systemd/system/${service_name}.service":
       ensure => absent,
-      notify => Exec['systemd_daemon_reload_uninstall'],
     }
 
     exec { 'systemd_daemon_reload_uninstall':
       command     => '/bin/systemctl daemon-reload',
       path        => ['/usr/bin', '/bin'],
-      refreshonly => true,
+      require     => File["/etc/systemd/system/${service_name}.service"],
     }
 
     exec { 'systemd_reset_failed_uninstall':
       command     => "/bin/systemctl reset-failed ${service_name}",
       path        => ['/usr/bin', '/bin'],
-      refreshonly => true,
-      subscribe   => File["/etc/systemd/system/${service_name}.service"],
+      onlyif      => "/bin/bash -c '/bin/systemctl list-units --all --full | /bin/grep -q \"^${service_name}\\.service\"'",
+      require     => Exec['systemd_daemon_reload_uninstall'],
     }
 
     file { $tomcat_home:
