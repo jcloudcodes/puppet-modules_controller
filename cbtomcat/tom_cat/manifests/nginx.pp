@@ -1,3 +1,4 @@
+# Manages NGINX reverse proxy for Tomcat.
 class tom_cat::nginx (
   String $server_name = 'tomcat.jcloudcodes.com',
   String $tomcat_port = '8085',
@@ -12,38 +13,10 @@ class tom_cat::nginx (
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => @("EOF"),
-upstream tomcat_backend {
-    server 127.0.0.1:${tomcat_port};
-}
-
-server {
-    listen 80;
-    server_name ${server_name};
-
-    access_log /var/log/nginx/tomcat-access.log;
-    error_log  /var/log/nginx/tomcat-error.log;
-
-    client_max_body_size 200M;
-
-    location / {
-        proxy_pass http://tomcat_backend;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_read_timeout 3600;
-        proxy_send_timeout 3600;
-    }
-}
-| EOF
+    content => epp('tom_cat/tomcat-nginx.conf.epp', {
+      'server_name' => $server_name,
+      'tomcat_port' => $tomcat_port,
+    }),
     require => Package['nginx'],
     notify  => Exec['validate_tomcat_nginx_config'],
   }

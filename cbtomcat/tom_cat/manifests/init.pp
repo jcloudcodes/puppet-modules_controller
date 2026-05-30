@@ -1,110 +1,86 @@
-class tom_cat (
-  Enum['prod', 'dev']          $environment  = 'prod',
-  Enum['install', 'uninstall'] $action       = 'install',
-  Optional[String]             $tom_version  = '10.1.24',
-  Optional[String]             $java_version = '21.0.11.10.1',
+# Manages NGINX reverse proxy for Tomcat.
+#
+# Exposes Tomcat through:
+#   http://tomcat.jcloudcodes.com
+#
+# Flow:
+# Tomcat listens locally on 8085.
+# NGINX listens on 80 and proxies traffic to Tomcat.
+
+class tom_cat::nginx (
+  String $server_name = 'tomcat.jcloudcodes.com',
+  String $tomcat_port = '8085',
 ) {
 
-  # Values from Hiera/common.yaml
-  $base_dir            = lookup('tom_cat::base_dir')
-  $tomcat_home         = lookup('tom_cat::tomcat_home')
-  $install_dir         = lookup('tom_cat::install_dir')
-  $java_root           = lookup('tom_cat::java_root')
-  $service_name        = lookup('tom_cat::service_name')
-  $nexus_url           = lookup('tom_cat::nexus_url')
-  $tomcat_user         = lookup('tom_cat::tomcat_user')
-  $tomcat_group        = lookup('tom_cat::tomcat_group')
-  $shutdown_port       = lookup('tom_cat::shutdown_port')
-  $connector_port      = lookup('tom_cat::connector_port')
-  $redirect_port       = lookup('tom_cat::redirect_port')
-  $admin_user          = lookup('tom_cat::admin_user')
-  $admin_password      = Sensitive(lookup('tom_cat::admin_password'))
-  $nginx_server_name   = lookup('tom_cat::nginx_server_name', { 'default_value' => 'tomcat.jcloudcodes.com' })
-  $windows_install_dir = lookup('tom_cat::windows_install_dir')
+  # Install NGINX package.
+  package { 'nginx':
+    ensure => installed,
+  }
 
-  if $action == 'uninstall' {
+  # Manage Tomcat NGINX reverse proxy configuration.
+  file { '/etc/nginx/conf.d/tomcat.conf':
+    ensure  => file,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
 
-    class { 'tom_cat::uninstall':
-      environment         => $environment,
-      tom_version         => $tom_version,
-      java_version        => $java_version,
-      base_dir            => $base_dir,
-      tomcat_home         => $tomcat_home,
-      install_dir         => $install_dir,
-      java_root           => $java_root,
-      service_name        => $service_name,
-      windows_install_dir => $windows_install_dir,
+    content => inline_epp(@('EOT')
+upstream tomcat_backend {
+    server 127.0.0.1:<%= $tomcat_port %>;
+}
+
+server {
+
+    listen 80;
+
+    server_name <%= $server_name %>;
+
+    access_log /var/log/nginx/tomcat-access.log;
+    error_log  /var/log/nginx/tomcat-error.log;
+
+    client_max_body_size 200M;
+
+    location / {
+
+        proxy_pass http://tomcat_backend;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
     }
+}
+| EOT
+    , {
+      'server_name' => $server_name,
+      'tomcat_port' => $tomcat_port,
+    }),
 
-  } elsif $action == 'install' {
+    require => Package['nginx'],
+    notify  => Exec['validate_tomcat_nginx_config'],
+  }
 
-    if $tom_version == undef or $tom_version == '' {
-      fail('Tomcat version is not set on console parameter')
-    }
+  # Validate NGINX configuration before restart.
+  exec { 'validate_tomcat_nginx_config':
+    command     => 'nginx -t',
+    refreshonly => true,
+    subscribe   => File['/etc/nginx/conf.d/tomcat.conf'],
+    notify      => Service['nginx'],
+  }
 
-    if $java_version == undef or $java_version == '' {
-      fail('Java version is not set on console parameter')
-    }
-
-    class { 'tom_cat::upgrade':
-      environment         => $environment,
-      tom_version         => $tom_version,
-      java_version        => $java_version,
-      base_dir            => $base_dir,
-      tomcat_home         => $tomcat_home,
-      install_dir         => $install_dir,
-      service_name        => $service_name,
-      tomcat_user         => $tomcat_user,
-      tomcat_group        => $tomcat_group,
-      windows_install_dir => $windows_install_dir,
-    }
-
-    -> class { 'tom_cat::install':
-      environment         => $environment,
-      tom_version         => $tom_version,
-      java_version        => $java_version,
-      nexus_url           => $nexus_url,
-      base_dir            => $base_dir,
-      tomcat_home         => $tomcat_home,
-      install_dir         => $install_dir,
-      java_root           => $java_root,
-      service_name        => $service_name,
-      tomcat_user         => $tomcat_user,
-      tomcat_group        => $tomcat_group,
-      windows_install_dir => $windows_install_dir,
-    }
-
-    -> class { 'tom_cat::config':
-      environment         => $environment,
-      tom_version         => $tom_version,
-      java_version        => $java_version,
-      tomcat_home         => $tomcat_home,
-      install_dir         => $install_dir,
-      java_root           => $java_root,
-      service_name        => $service_name,
-      tomcat_user         => $tomcat_user,
-      tomcat_group        => $tomcat_group,
-      shutdown_port       => $shutdown_port,
-      connector_port      => $connector_port,
-      redirect_port       => $redirect_port,
-      admin_user          => $admin_user,
-      admin_password      => $admin_password,
-      windows_install_dir => $windows_install_dir,
-    }
-
-    -> class { 'tom_cat::service':
-      service_name        => $service_name,
-      tomcat_home         => $tomcat_home,
-      install_dir         => $install_dir,
-      windows_install_dir => $windows_install_dir,
-    }
-
-    -> class { 'tom_cat::nginx':
-      server_name => $nginx_server_name,
-      tomcat_port => "${connector_port}",
-    }
-
-  } else {
-    fail("Unsupported action: ${action}")
+  # Enable and start NGINX service.
+  service { 'nginx':
+    ensure     => running,
+    enable     => true,
+    hasrestart => true,
+    require    => Package['nginx'],
   }
 }
