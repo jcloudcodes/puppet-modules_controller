@@ -21,14 +21,17 @@ class tom_cat::nginx (
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => @("EOF"),
+    content => inline_epp(@("EOF"), {
+      'server_name' => $server_name,
+      'tomcat_port' => $tomcat_port,
+    }),
 upstream tomcat_backend {
-    server 127.0.0.1:${tomcat_port};
+    server 127.0.0.1:<%= $tomcat_port %>;
 }
 
 server {
     listen 80;
-    server_name ${server_name};
+    server_name <%= $server_name %>;
 
     access_log /var/log/nginx/tomcat-access.log;
     error_log  /var/log/nginx/tomcat-error.log;
@@ -40,12 +43,12 @@ server {
 
         proxy_http_version 1.1;
 
-        proxy_set_header Host \${host};
-        proxy_set_header X-Real-IP \${remote_addr};
-        proxy_set_header X-Forwarded-For \${proxy_add_x_forwarded_for};
-        proxy_set_header X-Forwarded-Proto \${scheme};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
-        proxy_set_header Upgrade \${http_upgrade};
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_read_timeout 3600;
