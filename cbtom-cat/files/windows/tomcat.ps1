@@ -13,7 +13,7 @@ $ErrorActionPreference = 'Stop'
 $package = "apache-tomcat-$TomcatVersion"
 $zipPath = "C:\temp\$package-windows-x64.zip"
 $extractRoot = "C:\temp\tomcat-extract"
-$preserveDirName = 'tomcat-java'
+$preserveDirNames = @('tomcat-java', 'webapps')
 
 if (!(Test-Path "C:\temp")) {
     New-Item -Path "C:\temp" -ItemType Directory -Force | Out-Null
@@ -53,12 +53,19 @@ if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
     Start-Sleep -Seconds 3
 }
 
-Get-ChildItem -Path $InstallDir -Force | Where-Object { $_.Name -ne $preserveDirName } | ForEach-Object {
+Get-ChildItem -Path $InstallDir -Force | Where-Object { $_.Name -notin $preserveDirNames } | ForEach-Object {
     Remove-Item -Path $_.FullName -Recurse -Force
 }
 
-Get-ChildItem -Path $expandedDir.FullName -Force | ForEach-Object {
+$expandedWebapps = Join-Path $expandedDir.FullName 'webapps'
+$installWebapps = Join-Path $InstallDir 'webapps'
+
+Get-ChildItem -Path $expandedDir.FullName -Force | Where-Object { $_.Name -ne 'webapps' } | ForEach-Object {
     Move-Item -Path $_.FullName -Destination $InstallDir -Force
+}
+
+if (!(Test-Path $installWebapps) -and (Test-Path $expandedWebapps)) {
+    Move-Item -Path $expandedWebapps -Destination $InstallDir -Force
 }
 
 $serviceBat = Join-Path $InstallDir "bin\service.bat"
