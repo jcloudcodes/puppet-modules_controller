@@ -28,9 +28,36 @@ class tom_cat::uninstall (
       require => Service[$service_name],
     }
 
+    exec { 'stop_nginx_before_tomcat_uninstall':
+      command => '/bin/systemctl stop nginx',
+      onlyif  => '/bin/systemctl list-unit-files nginx.service',
+      path    => ['/usr/bin', '/bin'],
+      require => Service[$service_name],
+    }
+
+    exec { 'disable_nginx_before_tomcat_uninstall':
+      command => '/bin/systemctl disable nginx',
+      onlyif  => '/bin/systemctl list-unit-files nginx.service',
+      path    => ['/usr/bin', '/bin'],
+      require => Exec['stop_nginx_before_tomcat_uninstall'],
+    }
+
     file { "/etc/systemd/system/${service_name}.service":
       ensure => absent,
       notify => Exec['systemd_daemon_reload_uninstall'],
+    }
+
+    file { '/etc/nginx/conf.d/tomcat.conf':
+      ensure  => absent,
+      require => Exec['disable_nginx_before_tomcat_uninstall'],
+    }
+
+    package { 'nginx':
+      ensure  => absent,
+      require => [
+        Exec['disable_nginx_before_tomcat_uninstall'],
+        File['/etc/nginx/conf.d/tomcat.conf'],
+      ],
     }
 
     exec { 'systemd_daemon_reload_uninstall':

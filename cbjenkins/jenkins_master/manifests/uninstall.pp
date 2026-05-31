@@ -39,6 +39,20 @@ class jenkins_master::uninstall (
     require => Package[$jenkins_package],
   }
 
+  # Stop NGINX only if the service exists.
+  exec { 'stop_nginx_before_uninstall':
+    command => 'systemctl stop nginx',
+    onlyif  => 'systemctl list-unit-files nginx.service',
+    require => Package[$jenkins_package],
+  }
+
+  # Disable NGINX only if the service exists.
+  exec { 'disable_nginx_before_uninstall':
+    command => 'systemctl disable nginx',
+    onlyif  => 'systemctl list-unit-files nginx.service',
+    require => Exec['stop_nginx_before_uninstall'],
+  }
+
   # Remove Jenkins systemd override directory.
   file { '/etc/systemd/system/jenkins.service.d':
     ensure  => absent,
@@ -52,6 +66,12 @@ class jenkins_master::uninstall (
   file { '/etc/yum.repos.d/jenkins.repo':
     ensure  => absent,
     require => Package[$jenkins_package],
+  }
+
+  # Remove Jenkins NGINX reverse proxy configuration.
+  file { '/etc/nginx/conf.d/jenkins.conf':
+    ensure  => absent,
+    require => Exec['disable_nginx_before_uninstall'],
   }
 
   # Remove Jenkins logrotate configuration.
@@ -82,6 +102,15 @@ class jenkins_master::uninstall (
   file { '/usr/share/java/jenkins.war':
     ensure  => absent,
     require => Package[$jenkins_package],
+  }
+
+  # Remove NGINX package.
+  package { 'nginx':
+    ensure  => absent,
+    require => [
+      Exec['disable_nginx_before_uninstall'],
+      File['/etc/nginx/conf.d/jenkins.conf'],
+    ],
   }
 
   # Remove Jenkins generated systemd unit symlink if left behind.
