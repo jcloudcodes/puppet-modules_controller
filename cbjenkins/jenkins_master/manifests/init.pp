@@ -68,20 +68,20 @@ class jenkins_master (
       corretto_jdk_version => $corretto_jdk_version,
     }
 
+    -> class { 'jenkins_master::service':
+      service_name => $service_name,
+    }
+
     -> class { 'jenkins_master::nginx':
       server_name  => $nginx_server_name,
       jenkins_port => $http_port,
     }
 
-    -> class { 'jenkins_master::service':
-      service_name => $service_name,
-    }
-
     contain jenkins_master::install
     contain jenkins_master::upgrade
     contain jenkins_master::config
-    contain jenkins_master::nginx
     contain jenkins_master::service
+    contain jenkins_master::nginx
 
   } else {
     fail("Unsupported action: ${action}")

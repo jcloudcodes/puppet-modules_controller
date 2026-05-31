@@ -12,66 +12,45 @@ class jenkins_master::nginx (
   String $jenkins_port = '8080',
 ) {
 
-  # Install NGINX package.
   package { 'nginx':
     ensure => installed,
   }
 
-  # Manage Jenkins NGINX reverse proxy config.
   file { '/etc/nginx/conf.d/jenkins.conf':
     ensure  => file,
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => @("EOF"),
-upstream jenkins_backend {
-    server 127.0.0.1:${jenkins_port};
-}
-
-server {
-    listen 80;
-    server_name ${server_name};
-
-    access_log /var/log/nginx/jenkins-access.log;
-    error_log  /var/log/nginx/jenkins-error.log;
-
-    client_max_body_size 200M;
-
-    location / {
-        proxy_pass http://jenkins_backend;
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_read_timeout 3600;
-        proxy_send_timeout 3600;
-    }
-}
-| EOF
+    content => epp('jenkins_master/jenkins-nginx.conf.epp', {
+      'server_name'  => $server_name,
+      'jenkins_port' => $jenkins_port,
+    }),
     require => Package['nginx'],
-    notify  => Service['nginx'],
+    notify  => Exec['validate_jenkins_nginx_config'],
   }
 
-  # Validate NGINX configuration before reload/restart.
-  exec { 'validate_nginx_config':
+  exec { 'allow_nginx_jenkins_selinux_connect':
+    command => 'setsebool -P httpd_can_network_connect 1',
+    path    => ['/usr/sbin', '/usr/bin', '/sbin', '/bin'],
+    unless  => "/bin/bash -c 'command -v getenforce >/dev/null 2>&1 && test \"$(getenforce)\" = \"Enforcing\" && getsebool httpd_can_network_connect | grep -q -- \"--> on\"'",
+    before  => Service['nginx'],
+  }
+
+  exec { 'validate_jenkins_nginx_config':
     command     => 'nginx -t',
+    path        => ['/usr/sbin', '/usr/bin', '/sbin', '/bin'],
     refreshonly => true,
     subscribe   => File['/etc/nginx/conf.d/jenkins.conf'],
-    before      => Service['nginx'],
+    notify      => Service['nginx'],
   }
 
-  # Enable and start NGINX.
   service { 'nginx':
     ensure     => running,
     enable     => true,
     hasrestart => true,
-    require    => Package['nginx'],
+    require    => [
+      Package['nginx'],
+      Exec['allow_nginx_jenkins_selinux_connect'],
+    ],
   }
 }
