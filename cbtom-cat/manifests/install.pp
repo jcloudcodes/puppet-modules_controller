@@ -173,17 +173,19 @@ class tom_cat::install (
     require => File[$windows_temp],
   }
 
-  exec { 'install_java_windows':
-    command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-java.ps1 -JavaUrl ${windows_corretto_url} -ZipPath ${windows_corretto_zip} -ExtractRoot ${windows_extract_root} -InstallDir ${windows_install_dir} -JavaHome ${windows_corretto_dir}",
+    exec { 'install_java_windows':
+    command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-java.ps1 -JavaUrl ${windows_corretto_url} -ZipPath ${windows_corretto_zip} -ExtractRoot C:/temp/corretto-extract -InstallDir ${windows_install_dir} -JavaHome ${windows_corretto_dir}",
     unless      => "${windows_powershell} -NoProfile -Command \"if (Test-Path '${windows_corretto_dir}/bin/java.exe') { exit 0 } else { exit 1 }\"",
-    cwd         => $windows_temp,
+    cwd         => 'C:/temp',
     environment => [
-      "TEMP=${windows_temp}",
-      "TMP=${windows_temp}",
+      'TEMP=C:/temp',
+      'TMP=C:/temp',
     ],
     require     => [
+      File['C:/temp'],
+      File['C:/temp/corretto-extract'],
+      File['C:/Users/Administrator/AppData/Local/Temp/2'],
       File['C:/temp/install-java.ps1'],
-      File[$windows_extract_root],
     ],
     logoutput   => true,
   }
