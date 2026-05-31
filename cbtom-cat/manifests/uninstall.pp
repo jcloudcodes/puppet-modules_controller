@@ -111,8 +111,10 @@ class tom_cat::uninstall (
 
   } elsif $facts['kernel'] == 'windows' {
 
+    $windows_powershell = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+
     exec { 'remove_windows_service':
-      command   => "powershell.exe -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { Stop-Service -Name '${service_name}' -Force; sc.exe delete ${service_name} }\"",
+      command   => "${windows_powershell} -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { Stop-Service -Name '${service_name}' -Force; sc.exe delete ${service_name} }\"",
       logoutput => true,
     }
 

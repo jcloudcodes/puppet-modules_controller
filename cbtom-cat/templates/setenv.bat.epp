@@ -1,4 +1,4 @@
-set "JAVA_HOME=C:\Program Files\OpenJDK\jdk-<%= $java_version %>"
+set "JAVA_HOME=<%= $java_home %>"
 set "CATALINA_HOME=<%= $tomcat_home %>"
 set "CATALINA_BASE=<%= $install_dir %>"
 set "CATALINA_OPTS=-Xms512M -Xmx1024M"

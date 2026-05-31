@@ -16,6 +16,8 @@ class tom_cat::install (
   $tomcat_package = "apache-tomcat-${tom_version}"
   $tomcat_major_version = regsubst($tom_version, '^([0-9]+)\..*$', '\1')
   $tomcat_source_url    = "${nexus_url}/tomcat-${tomcat_major_version}/v${tom_version}/bin/${tomcat_package}.tar.gz"
+  $tomcat_windows_package = "apache-tomcat-${tom_version}-windows-x64.zip"
+  $tomcat_windows_url     = "${nexus_url}/tomcat-${tomcat_major_version}/v${tom_version}/bin/${tomcat_windows_package}"
   $corretto_major_version = regsubst($java_version, '^([0-9]+).*$', '\1')
   $corretto_archive       = "amazon-corretto-${corretto_major_version}-x64-linux-jdk.tar.gz"
   $corretto_download      = "/tmp/${corretto_archive}"
@@ -146,13 +148,20 @@ class tom_cat::install (
 
   } elsif $facts['kernel'] == 'windows' {
 
-    package { "OpenJDK ${java_version}":
-      ensure   => installed,
-      provider => chocolatey,
-    }
+    $windows_powershell     = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+    $windows_corretto_zip   = "C:/temp/amazon-corretto-${java_version}-windows-x64-jdk.zip"
+    $windows_corretto_dir   = "${windows_install_dir}/tomcat-java"
+    $windows_corretto_url   = "https://corretto.aws/downloads/resources/${java_version}/amazon-corretto-${java_version}-windows-x64-jdk.zip"
 
     file { 'C:/temp':
       ensure => directory,
+    }
+
+    exec { 'install_java_windows':
+      command   => "${windows_powershell} -ExecutionPolicy Bypass -Command \"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; if (!(Test-Path 'C:/temp')) { New-Item -Path 'C:/temp' -ItemType Directory -Force | Out-Null }; if (!(Test-Path '${windows_install_dir}')) { New-Item -Path '${windows_install_dir}' -ItemType Directory -Force | Out-Null }; Invoke-WebRequest -Uri '${windows_corretto_url}' -OutFile '${windows_corretto_zip}'; $extractRoot = 'C:/temp/corretto-extract'; if (Test-Path $extractRoot) { Remove-Item -Path $extractRoot -Recurse -Force }; Expand-Archive -Path '${windows_corretto_zip}' -DestinationPath $extractRoot -Force; $jdkDir = Get-ChildItem -Path $extractRoot -Directory | Select-Object -First 1; if (-not $jdkDir) { throw 'Corretto archive extraction failed' }; if (Test-Path '${windows_corretto_dir}') { Remove-Item -Path '${windows_corretto_dir}' -Recurse -Force }; Move-Item -Path $jdkDir.FullName -Destination '${windows_corretto_dir}'\"",
+      unless    => "${windows_powershell} -Command \"if (Test-Path '${windows_corretto_dir}/bin/java.exe') { exit 0 } else { exit 1 }\"",
+      require   => File['C:/temp'],
+      logoutput => true,
     }
 
     file { 'C:/temp/install-tomcat.ps1':
@@ -162,9 +171,12 @@ class tom_cat::install (
     }
 
     exec { 'install_tomcat_windows':
-      command   => "powershell.exe -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -NexusUrl ${nexus_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name}",
-      unless    => "powershell.exe -Command \"if (Test-Path '${windows_install_dir}') { exit 0 } else { exit 1 }\"",
-      require   => File['C:/temp/install-tomcat.ps1'],
+      command   => "${windows_powershell} -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name}",
+      unless    => "${windows_powershell} -Command \"if (Test-Path '${windows_install_dir}/bin/service.bat') { exit 0 } else { exit 1 }\"",
+      require   => [
+        Exec['install_java_windows'],
+        File['C:/temp/install-tomcat.ps1'],
+      ],
       logoutput => true,
     }
 

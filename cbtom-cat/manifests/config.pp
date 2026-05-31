@@ -178,12 +178,14 @@ class tom_cat::config (
 
   } elsif $facts['kernel'] == 'windows' {
 
+    $windows_java_home = "${windows_install_dir}/tomcat-java"
+
     file { "${windows_install_dir}/bin/setenv.bat":
       ensure  => file,
       content => epp('tom_cat/setenv.bat.epp', {
-        java_version => $java_version,
-        tomcat_home  => $windows_install_dir,
-        install_dir  => $windows_install_dir,
+        java_home   => $windows_java_home,
+        tomcat_home => $windows_install_dir,
+        install_dir => $windows_install_dir,
       }),
     }
 
