@@ -6,6 +6,7 @@ This module manages a Jenkins Linux inbound agent with:
 - A dedicated Jenkins SSH agent user
 - SSH authorized key access for the Jenkins controller
 - A custom workspace and Java path for SSH-launched builds
+- An optional NGINX status page exposed as `jslave.jcloudcodes.com`
 - Separate install, config, service, upgrade, and uninstall classes
 
 ### Module Layout
@@ -21,6 +22,9 @@ This module manages a Jenkins Linux inbound agent with:
 
 - `manifests/service.pp`
   Ensures the SSH service is enabled and running.
+
+- `manifests/nginx.pp`
+  Exposes a simple HTTP status page for the SSH agent host.
 
 - `manifests/upgrade.pp`
   Handles SSH service restarts and optional agent package refresh actions.
@@ -56,8 +60,10 @@ All other agent values are resolved from Hiera:
 
 ```bash
 systemctl status sshd
+systemctl status nginx
 ls -l /jcloudcodes/jslave
 ls -l /jcloudcodes/jslave-java
 cat /home/jenkins/.ssh/authorized_keys
+curl -I http://jslave.jcloudcodes.com/healthz
 su - jenkins -s /bin/bash -c '/jcloudcodes/jslave/jenkins-java/bin/java -version'
 ```

@@ -1,0 +1,17 @@
+server {
+    listen 80;
+    server_name <%= $server_name %>;
+
+    access_log /var/log/nginx/jslave-access.log;
+    error_log  /var/log/nginx/jslave-error.log;
+
+    location = /healthz {
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        add_header Content-Type text/plain;
+        return 200 "Jenkins SSH agent host: <%= $agent_name %>\n";
+    }
+}

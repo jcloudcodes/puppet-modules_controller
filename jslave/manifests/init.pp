@@ -10,6 +10,7 @@ class jslave (
   $agent_home       = lookup('jslave::agent_home')
   $java_root        = lookup('jslave::java_root')
   $controller_host  = lookup('jslave::controller_host')
+  $nginx_server_name = lookup('jslave::nginx_server_name', { 'default_value' => 'jslave.jcloudcodes.com' })
   $resolved_name    = lookup('jslave::agent_name')
   $resolved_labels  = lookup('jslave::agent_labels')
   $ssh_public_key   = lookup('jslave::ssh_public_key')
@@ -21,6 +22,7 @@ class jslave (
       java_root     => $java_root,
       agent_user    => $agent_user,
       agent_group   => $agent_group,
+      nginx_server_name => $nginx_server_name,
     }
     contain jslave::uninstall
   } elsif $action == 'install' {
@@ -65,10 +67,16 @@ class jslave (
       agent_home => $agent_home,
     }
 
+    -> class { 'jslave::nginx':
+      server_name => $nginx_server_name,
+      agent_name  => $resolved_name,
+    }
+
     contain jslave::install
     contain jslave::config
     contain jslave::upgrade
     contain jslave::service
+    contain jslave::nginx
   } else {
     fail("Unsupported action: ${action}")
   }

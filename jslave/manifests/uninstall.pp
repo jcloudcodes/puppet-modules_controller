@@ -4,6 +4,7 @@ class jslave::uninstall (
   String $java_root,
   String $agent_user,
   String $agent_group,
+  String $nginx_server_name,
 ) {
 
   Exec {
@@ -26,6 +27,30 @@ class jslave::uninstall (
     ensure => absent,
     recurse => true,
     force   => true,
+  }
+
+  exec { 'stop_nginx_before_jslave_uninstall':
+    command => '/bin/systemctl stop nginx',
+    onlyif  => '/bin/systemctl list-unit-files nginx.service',
+  }
+
+  exec { 'disable_nginx_before_jslave_uninstall':
+    command => '/bin/systemctl disable nginx',
+    onlyif  => '/bin/systemctl list-unit-files nginx.service',
+    require => Exec['stop_nginx_before_jslave_uninstall'],
+  }
+
+  file { '/etc/nginx/conf.d/jslave.conf':
+    ensure  => absent,
+    require => Exec['disable_nginx_before_jslave_uninstall'],
+  }
+
+  package { 'nginx':
+    ensure  => absent,
+    require => [
+      Exec['disable_nginx_before_jslave_uninstall'],
+      File['/etc/nginx/conf.d/jslave.conf'],
+    ],
   }
 
   user { $agent_user:
