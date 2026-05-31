@@ -125,7 +125,21 @@ class tom_cat (
       contain tom_cat::service
 
     } elsif $kernel == 'windows' {
-      class { 'tom_cat::install':
+      class { 'tom_cat::upgrade':
+        environment         => $environment,
+        tom_version         => $tom_version,
+        java_version        => $java_version,
+        base_dir            => $base_dir,
+        tomcat_home         => $tomcat_home,
+        install_dir         => $install_dir,
+        service_name        => $service_name,
+        tomcat_user         => $tomcat_user,
+        tomcat_group        => $tomcat_group,
+        windows_tomcat_home => $windows_tomcat_home,
+        windows_install_dir => $windows_install_dir,
+      }
+
+      -> class { 'tom_cat::install':
         environment         => $environment,
         tom_version         => $tom_version,
         java_version        => $java_version,
@@ -140,20 +154,6 @@ class tom_cat (
         windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
         windows_java_root   => $windows_java_root,
-      }
-
-      -> class { 'tom_cat::upgrade':
-        environment         => $environment,
-        tom_version         => $tom_version,
-        java_version        => $java_version,
-        base_dir            => $base_dir,
-        tomcat_home         => $tomcat_home,
-        install_dir         => $install_dir,
-        service_name        => $service_name,
-        tomcat_user         => $tomcat_user,
-        tomcat_group        => $tomcat_group,
-        windows_tomcat_home => $windows_tomcat_home,
-        windows_install_dir => $windows_install_dir,
       }
 
       -> class { 'tom_cat::config':
@@ -184,8 +184,8 @@ class tom_cat (
         windows_install_dir => $windows_install_dir,
       }
 
-      contain tom_cat::install
       contain tom_cat::upgrade
+      contain tom_cat::install
       contain tom_cat::config
       contain tom_cat::service
 

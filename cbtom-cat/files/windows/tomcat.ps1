@@ -36,6 +36,23 @@ if (!(Test-Path $InstallDir)) {
     New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
 }
 
+if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+    Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+    $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+    if ($service) {
+        $service.WaitForStatus('Stopped', (New-TimeSpan -Seconds 30))
+    }
+    Start-Sleep -Seconds 2
+    & sc.exe delete $ServiceName | Out-Null
+    for ($i = 0; $i -lt 15; $i++) {
+        if (-not (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue)) {
+            break
+        }
+        Start-Sleep -Seconds 2
+    }
+    Start-Sleep -Seconds 3
+}
+
 Get-ChildItem -Path $InstallDir -Force | Where-Object { $_.Name -ne $preserveDirName } | ForEach-Object {
     Remove-Item -Path $_.FullName -Recurse -Force
 }
