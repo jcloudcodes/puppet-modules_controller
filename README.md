@@ -7,6 +7,7 @@ The current modules cover:
 - Jenkins controller
 - Tomcat application server
 - Jenkins SSH agent
+- Nginx exposure patterns for controller, app, and agent hosts
 
 The repository also includes GitHub Actions deployment workflows and remote validation scripts so module changes can be pushed safely to the Puppet server.
 
@@ -48,9 +49,13 @@ Important runtime paths:
 └── jenkins-java -> /jcloudcodes/cbjenkins-java/amazon-corretto-<version>-linux-x64
 ```
 
+Top-level Puppet class:
+
+- `jenkins_master`
+
 ### `cbtom-cat`
 
-Manages Tomcat on Linux with:
+Manages Tomcat on Linux and Windows with:
 
 - Amazon Corretto installed in a custom path
 - Tomcat runtime under `/jcloudcodes/cbtom-cat/data`
@@ -68,6 +73,10 @@ Important runtime paths:
 /jcloudcodes/cbtomcat-java
 ```
 
+Top-level Puppet class:
+
+- `tom_cat`
+
 ### `jslave`
 
 Manages a Jenkins SSH agent host with:
@@ -84,6 +93,58 @@ Important runtime paths:
 ├── data
 └── jenkins-java -> /jcloudcodes/jslave-java/amazon-corretto-<version>-linux-x64
 ```
+
+Top-level Puppet class:
+
+- `jslave`
+
+## Nginx Summary
+
+This repository does not use one standalone shared Nginx module. Instead, Nginx behavior is managed inside the application modules where it belongs.
+
+### Jenkins Nginx
+
+Managed by:
+
+- `cbjenkins/manifests/nginx.pp`
+
+Purpose:
+
+- expose Jenkins at `jenkins.jcloudcodes.com`
+- preserve forwarded host/proto headers so Jenkins shows the public URL instead of the backend IP
+- validate `nginx -t` before reload
+- set the SELinux boolean needed for reverse proxy connectivity
+
+### Tomcat Nginx
+
+Managed by:
+
+- `cbtom-cat/manifests/nginx.pp`
+
+Purpose:
+
+- expose Tomcat at `tomcat.jcloudcodes.com`
+- proxy HTTP traffic to local Tomcat on port `8085`
+- validate `nginx -t` before reload
+- set the SELinux boolean needed for backend connectivity
+
+### Jenkins Slave Nginx
+
+Managed by:
+
+- `jslave/manifests/nginx.pp`
+
+Purpose:
+
+- expose a simple status endpoint at `jslave.jcloudcodes.com`
+- provide `/healthz` for basic host validation
+- avoid trying to proxy SSH through Nginx
+
+Current exposed endpoints:
+
+- `jenkins.jcloudcodes.com`
+- `tomcat.jcloudcodes.com`
+- `jslave.jcloudcodes.com`
 
 ## Design Approach
 
@@ -306,5 +367,3 @@ curl -I http://jslave.jcloudcodes.com/healthz
 - Add Puppet parser validation locally in CI with a Puppet toolchain container
 - Add environment-specific Hiera layers beyond `common.yaml`
 - Add tests for module structure and expected files
-
-############################Tomcat block
