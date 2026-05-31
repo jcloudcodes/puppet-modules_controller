@@ -29,6 +29,10 @@ if (!(Test-Path $JavaRoot)) {
     New-Item -Path $JavaRoot -ItemType Directory -Force | Out-Null
 }
 
+if (!(Test-Path $ExtractRoot)) {
+    New-Item -Path $ExtractRoot -ItemType Directory -Force | Out-Null
+}
+
 Invoke-WebRequest -Uri $JavaUrl -OutFile $ZipPath
 
 if (Test-Path $ExtractRoot) {

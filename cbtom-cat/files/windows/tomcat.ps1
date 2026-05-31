@@ -3,7 +3,8 @@ param(
     [string]$TomcatUrl,
     [string]$InstallDir,
     [string]$ServiceName,
-    [string]$JavaHome
+    [string]$JavaHome,
+    [string]$VersionFile
 )
 
 $ErrorActionPreference = 'Stop'
@@ -68,3 +69,5 @@ else {
 if (-not (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue)) {
     throw "Tomcat service '$ServiceName' was not created successfully"
 }
+
+Set-Content -Path $VersionFile -Value $TomcatVersion -Force

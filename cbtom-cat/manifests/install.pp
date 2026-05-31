@@ -157,6 +157,7 @@ class tom_cat::install (
     $windows_corretto_zip = "${windows_temp}/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
     $windows_corretto_dir = "${windows_java_root}/amazon-corretto-${java_version}-windows-x64"
     $windows_java_link    = "${windows_tomcat_home}/tomcat-java"
+    $windows_version_file = "${windows_install_dir}/.tomcat_version"
     $windows_corretto_url = "https://corretto.aws/downloads/latest/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
 
     file { $windows_temp:
@@ -182,11 +183,6 @@ class tom_cat::install (
       require => File[$windows_tomcat_home],
     }
 
-    file { $windows_extract_root:
-      ensure  => directory,
-      require => File[$windows_temp],
-    }
-
     file { 'C:/temp/install-java.ps1':
       ensure  => file,
       source  => 'puppet:///modules/tom_cat/windows/install-java.ps1',
@@ -207,7 +203,6 @@ class tom_cat::install (
         File[$windows_tomcat_home],
         File[$windows_install_dir],
         File[$windows_java_root],
-        File[$windows_extract_root],
         File['C:/temp/install-java.ps1'],
       ],
       logoutput   => true,
@@ -220,8 +215,8 @@ class tom_cat::install (
     }
 
     exec { 'install_tomcat_windows':
-      command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name} -JavaHome ${windows_java_link}",
-      unless      => "${windows_powershell} -NoProfile -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }\"",
+      command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name} -JavaHome ${windows_java_link} -VersionFile ${windows_version_file}",
+      unless      => "${windows_powershell} -NoProfile -Command \"if ((Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) -and (Test-Path '${windows_version_file}') -and ((Get-Content '${windows_version_file}' -ErrorAction SilentlyContinue | Select-Object -First 1) -eq '${tom_version}')) { exit 0 } else { exit 1 }\"",
       cwd         => $windows_temp,
       environment => [
         "TEMP=${windows_temp}",
