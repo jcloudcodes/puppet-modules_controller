@@ -198,7 +198,7 @@ class tom_cat::install (
 
   exec { 'install_tomcat_windows':
     command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name} -JavaHome ${windows_corretto_dir}",
-    unless      => "${windows_powershell} -NoProfile -Command \"if (Test-Path '${windows_install_dir}/bin/service.bat') { exit 0 } else { exit 1 }\"",
+    unless      => "${windows_powershell} -NoProfile -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }\"",
     cwd         => $windows_temp,
     environment => [
       "TEMP=${windows_temp}",
