@@ -152,7 +152,7 @@ class tom_cat::install (
   $windows_temp         = 'C:/temp'
   $windows_extract_root = 'C:/temp/corretto-extract'
 
-  $corretto_major_version = regsubst($java_version, '^([0-9]+).*$', '\1')
+  #$corretto_major_version = regsubst($java_version, '^([0-9]+).*$', '\1')
 
   $windows_corretto_zip = "${windows_temp}/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
   $windows_corretto_dir = "${windows_install_dir}/tomcat-java"
