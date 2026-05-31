@@ -37,13 +37,11 @@ class tom_cat::upgrade (
 
     exec { 'stop_tomcat_before_upgrade_windows':
       command   => "powershell.exe -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { Stop-Service -Name '${service_name}' -Force }\"",
-      provider  => powershell,
       logoutput => true,
     }
 
     exec { 'backup_existing_tomcat_windows':
       command   => "powershell.exe -Command \"if (Test-Path '${windows_install_dir}') { Compress-Archive -Path '${windows_install_dir}\\*' -DestinationPath 'C:\\temp\\${service_name}-${timestamp}.zip' -Force }\"",
-      provider  => powershell,
       logoutput => true,
       require   => Exec['stop_tomcat_before_upgrade_windows'],
     }

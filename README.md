@@ -467,6 +467,89 @@ Then rerun on the agent:
 puppet agent -t
 ```
 
+### Windows agent SSL / CA mismatch fix
+
+One Windows agent failure seen in this environment was:
+
+```text
+Info: Refreshing CA certificate
+Error: certificate verify failed [self-signed certificate in certificate chain for CN=Puppet Root CA: 5853579433589f]
+```
+
+On the Puppet server, `puppetserver ca list` showed:
+
+```text
+No certificates to list
+```
+
+That means the Windows agent still had stale local SSL state and never got far enough to submit a fresh CSR.
+
+Fix on the Windows agent:
+
+1. Stop the Puppet service:
+
+```bat
+net stop puppet
+```
+
+2. Confirm the SSL and config paths:
+
+```bat
+puppet config print ssldir
+puppet config print confdir
+puppet config print server
+```
+
+Example values from the working fix:
+
+```text
+C:/ProgramData/PuppetLabs/puppet/etc/ssl
+C:/ProgramData/PuppetLabs/puppet/etc
+puppet.jcloudcodes.com
+```
+
+3. Remove the stale SSL directory:
+
+```bat
+rmdir /s /q "C:\ProgramData\PuppetLabs\puppet\etc\ssl"
+```
+
+4. Reassert the correct Puppet server and CA server:
+
+```bat
+puppet config set server puppet.jcloudcodes.com --section main
+puppet config set ca_server puppet.jcloudcodes.com --section main
+```
+
+5. Request a fresh certificate:
+
+```bat
+puppet agent -t
+```
+
+Expected result:
+
+```text
+Info: Creating a new SSL certificate request for ec2amaz-bo2vfq6.ec2.internal
+Info: Certificate Request fingerprint (SHA256): ...
+Info: Certificate for ec2amaz-bo2vfq6.ec2.internal has not been signed yet
+```
+
+6. Back on the Puppet server, list and sign the pending request:
+
+```bash
+sudo /opt/puppetlabs/bin/puppetserver ca list
+sudo /opt/puppetlabs/bin/puppetserver ca sign --certname ec2amaz-bo2vfq6.ec2.internal
+```
+
+7. Rerun the agent:
+
+```bat
+puppet agent -t
+```
+
+This is the standard recovery when the agent trusts an old Puppet CA or has stale local SSL material.
+
 ### Jenkins SSH agent behavior
 
 The `jslave` module prepares the host for SSH-based Jenkins agent access, but Jenkins still needs a node definition on the controller side.

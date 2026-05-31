@@ -163,8 +163,7 @@ class tom_cat::install (
 
     exec { 'install_tomcat_windows':
       command   => "powershell.exe -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -NexusUrl ${nexus_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name}",
-      provider  => powershell,
-      unless    => "if (Test-Path '${windows_install_dir}') { exit 0 } else { exit 1 }",
+      unless    => "powershell.exe -Command \"if (Test-Path '${windows_install_dir}') { exit 0 } else { exit 1 }\"",
       require   => File['C:/temp/install-tomcat.ps1'],
       logoutput => true,
     }

@@ -113,7 +113,6 @@ class tom_cat::uninstall (
 
     exec { 'remove_windows_service':
       command   => "powershell.exe -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { Stop-Service -Name '${service_name}' -Force; sc.exe delete ${service_name} }\"",
-      provider  => powershell,
       logoutput => true,
     }
 
