@@ -235,6 +235,14 @@ class tom_cat::install (
       logoutput   => true,
     }
 
+    exec { 'cleanup_tomcat_temp_windows':
+      command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -Command \"\$paths = @('${windows_corretto_zip}','${windows_temp}/apache-tomcat-${tom_version}-windows-x64.zip','${windows_extract_root}','${windows_temp}/tomcat-extract','${windows_temp}/install-java.ps1','${windows_temp}/install-tomcat.ps1'); foreach (\$path in \$paths) { if (Test-Path \$path) { Remove-Item -Path \$path -Recurse -Force } }\"",
+      onlyif      => "${windows_powershell} -NoProfile -Command \"\$paths = @('${windows_corretto_zip}','${windows_temp}/apache-tomcat-${tom_version}-windows-x64.zip','${windows_extract_root}','${windows_temp}/tomcat-extract','${windows_temp}/install-java.ps1','${windows_temp}/install-tomcat.ps1'); foreach (\$path in \$paths) { if (Test-Path \$path) { exit 0 } }; exit 1\"",
+      timeout     => 600,
+      require     => Exec['install_tomcat_windows'],
+      logoutput   => true,
+    }
+
   } else {
     fail("Unsupported kernel: ${facts['kernel']}")
   }

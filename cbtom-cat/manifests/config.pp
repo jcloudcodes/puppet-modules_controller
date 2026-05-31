@@ -182,6 +182,21 @@ class tom_cat::config (
 
     $windows_java_home = "${windows_tomcat_home}/tomcat-java"
 
+    file { "${windows_install_dir}/webapps/manager":
+      ensure => directory,
+    }
+
+    file { "${windows_install_dir}/webapps/manager/META-INF":
+      ensure  => directory,
+      require => File["${windows_install_dir}/webapps/manager"],
+    }
+
+    file { "${windows_install_dir}/webapps/manager/META-INF/context.xml":
+      ensure  => file,
+      content => epp('tom_cat/manager-context.xml.epp', {}),
+      require => File["${windows_install_dir}/webapps/manager/META-INF"],
+    }
+
     file { "${windows_install_dir}/bin/setenv.bat":
       ensure  => file,
       content => epp('tom_cat/setenv.bat.epp', {
