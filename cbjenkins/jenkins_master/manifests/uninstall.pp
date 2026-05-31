@@ -157,19 +157,11 @@ class jenkins_master::uninstall (
     ],
   }
   }
-  # Remove perl-Git first so git can be cleanly uninstalled when it was
-  # pulled in alongside the Jenkins-managed git package.
-  package { 'perl-Git':
-    ensure  => absent,
+  # Remove Git and perl-Git together in one transaction to avoid the
+  # RPM dependency loop between the two packages.
+  exec { 'remove_git_and_perl_git_after_jenkins_uninstall':
+    command => '/usr/bin/dnf remove -y git perl-Git',
+    onlyif  => "/bin/bash -c 'rpm -q git >/dev/null 2>&1 || rpm -q perl-Git >/dev/null 2>&1'",
     require => Package[$jenkins_package],
-  }
-
-  # Optional: remove Git installed by this Jenkins module.
-  package { 'git':
-    ensure  => absent,
-    require => [
-      Package[$jenkins_package],
-      Package['perl-Git'],
-    ],
   }
 }
