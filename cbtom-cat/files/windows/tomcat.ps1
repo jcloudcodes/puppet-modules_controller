@@ -11,6 +11,8 @@ $ErrorActionPreference = 'Stop'
 
 $package = "apache-tomcat-$TomcatVersion"
 $zipPath = "C:\temp\$package-windows-x64.zip"
+$extractRoot = "C:\temp\tomcat-extract"
+$preserveDirName = 'tomcat-java'
 
 if (!(Test-Path "C:\temp")) {
     New-Item -Path "C:\temp" -ItemType Directory -Force | Out-Null
@@ -18,15 +20,27 @@ if (!(Test-Path "C:\temp")) {
 
 Invoke-WebRequest -Uri $TomcatUrl -OutFile $zipPath
 
-if (Test-Path $InstallDir) {
-    Remove-Item -Path $InstallDir -Recurse -Force
+if (Test-Path $extractRoot) {
+    Remove-Item -Path $extractRoot -Recurse -Force
 }
 
-Expand-Archive -Path $zipPath -DestinationPath "C:\" -Force
+Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
 
-$expandedDir = Get-ChildItem -Path "C:\" -Directory | Where-Object { $_.Name -like "$package*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if ($expandedDir) {
-    Rename-Item -Path $expandedDir.FullName -NewName (Split-Path $InstallDir -Leaf)
+$expandedDir = Get-ChildItem -Path $extractRoot -Directory | Where-Object { $_.Name -like "$package*" } | Select-Object -First 1
+if (-not $expandedDir) {
+    throw "Expanded Tomcat directory for $package was not found"
+}
+
+if (!(Test-Path $InstallDir)) {
+    New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
+}
+
+Get-ChildItem -Path $InstallDir -Force | Where-Object { $_.Name -ne $preserveDirName } | ForEach-Object {
+    Remove-Item -Path $_.FullName -Recurse -Force
+}
+
+Get-ChildItem -Path $expandedDir.FullName -Force | ForEach-Object {
+    Move-Item -Path $_.FullName -Destination $InstallDir -Force
 }
 
 $serviceBat = Join-Path $InstallDir "bin\service.bat"
