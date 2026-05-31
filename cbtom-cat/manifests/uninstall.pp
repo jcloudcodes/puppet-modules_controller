@@ -7,7 +7,9 @@ class tom_cat::uninstall (
   String              $install_dir,
   String              $java_root,
   String              $service_name,
+  String              $windows_tomcat_home,
   String              $windows_install_dir,
+  String              $windows_java_root,
 ) {
 
   $tomcat_package         = "apache-tomcat-${tom_version}"
@@ -118,7 +120,14 @@ class tom_cat::uninstall (
       logoutput => true,
     }
 
-    file { $windows_install_dir:
+    file { $windows_tomcat_home:
+      ensure  => absent,
+      recurse => true,
+      force   => true,
+      require => Exec['remove_windows_service'],
+    }
+
+    file { $windows_java_root:
       ensure  => absent,
       recurse => true,
       force   => true,

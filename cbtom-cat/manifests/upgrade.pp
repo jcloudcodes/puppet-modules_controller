@@ -8,6 +8,7 @@ class tom_cat::upgrade (
   String              $service_name,
   String              $tomcat_user,
   String              $tomcat_group,
+  String              $windows_tomcat_home,
   String              $windows_install_dir,
 ) {
 

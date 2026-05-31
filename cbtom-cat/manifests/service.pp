@@ -2,7 +2,8 @@ class tom_cat::service (
   String $service_name = 'tomcat',
   String $tomcat_home = '/jcloudcodes/cbtom-cat',
   String $install_dir = '/jcloudcodes/cbtom-cat/data',
-  String $windows_install_dir = 'C:/Tomcat',
+  String $windows_tomcat_home = 'C:/jcloudcodes/cbtom-cat',
+  String $windows_install_dir = 'C:/jcloudcodes/cbtom-cat/data',
 ) {
 
   if $facts['kernel'] == 'Linux' {

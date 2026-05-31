@@ -10,7 +10,9 @@ class tom_cat::install (
   String              $service_name,
   String              $tomcat_user,
   String              $tomcat_group,
+  String              $windows_tomcat_home,
   String              $windows_install_dir,
+  String              $windows_java_root,
 ) {
 
   $tomcat_package = "apache-tomcat-${tom_version}"
@@ -148,69 +150,84 @@ class tom_cat::install (
 
   } elsif $facts['kernel'] == 'windows' {
 
-  $windows_powershell   = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
-  $windows_temp         = 'C:/temp'
-  $windows_extract_root = 'C:/temp/corretto-extract'
+    $windows_powershell   = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+    $windows_temp         = 'C:/temp'
+    $windows_extract_root = 'C:/temp/corretto-extract'
+    $windows_corretto_zip = "${windows_temp}/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
+    $windows_corretto_dir = "${windows_java_root}/amazon-corretto-${java_version}-windows-x64"
+    $windows_java_link    = "${windows_tomcat_home}/tomcat-java"
+    $windows_corretto_url = "https://corretto.aws/downloads/latest/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
 
-  #$corretto_major_version = regsubst($java_version, '^([0-9]+).*$', '\1')
+    file { $windows_temp:
+      ensure => directory,
+    }
 
-  $windows_corretto_zip = "${windows_temp}/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
-  $windows_corretto_dir = "${windows_install_dir}/tomcat-java"
-  $windows_corretto_url = "https://corretto.aws/downloads/latest/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
+    file { $windows_tomcat_home:
+      ensure => directory,
+    }
 
-  file { $windows_temp:
-    ensure => directory,
-  }
+    file { $windows_install_dir:
+      ensure  => directory,
+      require => File[$windows_tomcat_home],
+    }
 
-  file { $windows_extract_root:
-    ensure  => directory,
-    require => File[$windows_temp],
-  }
+    file { $windows_java_root:
+      ensure  => directory,
+      require => File[$windows_tomcat_home],
+    }
 
-  file { 'C:/temp/install-java.ps1':
-    ensure  => file,
-    source  => 'puppet:///modules/tom_cat/windows/install-java.ps1',
-    require => File[$windows_temp],
-  }
+    file { $windows_extract_root:
+      ensure  => directory,
+      require => File[$windows_temp],
+    }
 
-  exec { 'install_java_windows':
-    command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-java.ps1 -JavaUrl ${windows_corretto_url} -ZipPath ${windows_corretto_zip} -ExtractRoot ${windows_extract_root} -InstallDir ${windows_install_dir} -JavaHome ${windows_corretto_dir}",
-    unless      => "${windows_powershell} -NoProfile -Command \"if (Test-Path '${windows_corretto_dir}/bin/java.exe') { exit 0 } else { exit 1 }\"",
-    cwd         => $windows_temp,
-    environment => [
-      "TEMP=${windows_temp}",
-      "TMP=${windows_temp}",
-    ],
-    timeout     => 1800,
-    require     => [
-      File[$windows_temp],
-      File[$windows_extract_root],
-      File['C:/temp/install-java.ps1'],
-    ],
-    logoutput   => true,
-  }
+    file { 'C:/temp/install-java.ps1':
+      ensure  => file,
+      source  => 'puppet:///modules/tom_cat/windows/install-java.ps1',
+      require => File[$windows_temp],
+    }
 
-  file { 'C:/temp/install-tomcat.ps1':
-    ensure  => file,
-    source  => 'puppet:///modules/tom_cat/windows/tomcat.ps1',
-    require => File[$windows_temp],
-  }
+    exec { 'install_java_windows':
+      command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-java.ps1 -JavaUrl ${windows_corretto_url} -ZipPath ${windows_corretto_zip} -ExtractRoot ${windows_extract_root} -JavaRoot ${windows_java_root} -JavaHome ${windows_corretto_dir} -JavaLink ${windows_java_link}",
+      unless      => "${windows_powershell} -NoProfile -Command \"if (Test-Path '${windows_java_link}/bin/java.exe') { exit 0 } else { exit 1 }\"",
+      cwd         => $windows_temp,
+      environment => [
+        "TEMP=${windows_temp}",
+        "TMP=${windows_temp}",
+      ],
+      timeout     => 1800,
+      require     => [
+        File[$windows_temp],
+        File[$windows_tomcat_home],
+        File[$windows_install_dir],
+        File[$windows_java_root],
+        File[$windows_extract_root],
+        File['C:/temp/install-java.ps1'],
+      ],
+      logoutput   => true,
+    }
 
-  exec { 'install_tomcat_windows':
-    command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name} -JavaHome ${windows_corretto_dir}",
-    unless      => "${windows_powershell} -NoProfile -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }\"",
-    cwd         => $windows_temp,
-    environment => [
-      "TEMP=${windows_temp}",
-      "TMP=${windows_temp}",
-    ],
-    timeout     => 1800,
-    require     => [
-      Exec['install_java_windows'],
-      File['C:/temp/install-tomcat.ps1'],
-    ],
-    logoutput   => true,
-  }
+    file { 'C:/temp/install-tomcat.ps1':
+      ensure  => file,
+      source  => 'puppet:///modules/tom_cat/windows/tomcat.ps1',
+      require => File[$windows_temp],
+    }
+
+    exec { 'install_tomcat_windows':
+      command     => "${windows_powershell} -NoProfile -ExecutionPolicy Bypass -File C:/temp/install-tomcat.ps1 -TomcatVersion ${tom_version} -TomcatUrl ${tomcat_windows_url} -InstallDir ${windows_install_dir} -ServiceName ${service_name} -JavaHome ${windows_java_link}",
+      unless      => "${windows_powershell} -NoProfile -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }\"",
+      cwd         => $windows_temp,
+      environment => [
+        "TEMP=${windows_temp}",
+        "TMP=${windows_temp}",
+      ],
+      timeout     => 1800,
+      require     => [
+        Exec['install_java_windows'],
+        File['C:/temp/install-tomcat.ps1'],
+      ],
+      logoutput   => true,
+    }
 
   } else {
     fail("Unsupported kernel: ${facts['kernel']}")

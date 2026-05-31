@@ -6,7 +6,9 @@ tom_cat::java_root: '/jcloudcodes/cbtomcat-java'
 tom_cat::service_name: 'tomcat'
 tom_cat::tomcat_user: 'tomcat'
 tom_cat::tomcat_group: 'tomcat'
-tom_cat::windows_install_dir: 'C:/Tomcat'
+tom_cat::windows_tomcat_home: 'C:/jcloudcodes/cbtom-cat'
+tom_cat::windows_install_dir: 'C:/jcloudcodes/cbtom-cat/data'
+tom_cat::windows_java_root: 'C:/jcloudcodes/cbtomcat-java'
 tom_cat::shutdown_port: 8005
 tom_cat::connector_port: 8085
 tom_cat::redirect_port: 8443

@@ -13,7 +13,9 @@ class tom_cat::config (
   Integer             $redirect_port,
   String              $admin_user,
   Sensitive[String]   $admin_password,
+  String              $windows_tomcat_home,
   String              $windows_install_dir,
+  String              $windows_java_root,
 ) {
 
   if $facts['kernel'] == 'Linux' {
@@ -178,7 +180,7 @@ class tom_cat::config (
 
   } elsif $facts['kernel'] == 'windows' {
 
-    $windows_java_home = "${windows_install_dir}/tomcat-java"
+    $windows_java_home = "${windows_tomcat_home}/tomcat-java"
 
     file { "${windows_install_dir}/bin/setenv.bat":
       ensure  => file,

@@ -20,7 +20,9 @@ class tom_cat (
   $admin_user          = lookup('tom_cat::admin_user')
   $admin_password      = Sensitive(lookup('tom_cat::admin_password'))
   $nginx_server_name   = lookup('tom_cat::nginx_server_name', { 'default_value' => 'tomcat.jcloudcodes.com' })
+  $windows_tomcat_home = lookup('tom_cat::windows_tomcat_home')
   $windows_install_dir = lookup('tom_cat::windows_install_dir')
+  $windows_java_root   = lookup('tom_cat::windows_java_root')
   $kernel              = $facts['kernel']
 
   if $action == 'uninstall' {
@@ -34,7 +36,9 @@ class tom_cat (
       install_dir         => $install_dir,
       java_root           => $java_root,
       service_name        => $service_name,
+      windows_tomcat_home => $windows_tomcat_home,
       windows_install_dir => $windows_install_dir,
+      windows_java_root   => $windows_java_root,
     }
 
     contain tom_cat::uninstall
@@ -62,7 +66,9 @@ class tom_cat (
         service_name        => $service_name,
         tomcat_user         => $tomcat_user,
         tomcat_group        => $tomcat_group,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
+        windows_java_root   => $windows_java_root,
       }
 
       -> class { 'tom_cat::upgrade':
@@ -75,6 +81,7 @@ class tom_cat (
         service_name        => $service_name,
         tomcat_user         => $tomcat_user,
         tomcat_group        => $tomcat_group,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
       }
 
@@ -98,13 +105,16 @@ class tom_cat (
         redirect_port       => $redirect_port,
         admin_user          => $admin_user,
         admin_password      => $admin_password,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
+        windows_java_root   => $windows_java_root,
       }
 
       -> class { 'tom_cat::service':
         service_name        => $service_name,
         tomcat_home         => $tomcat_home,
         install_dir         => $install_dir,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
       }
 
@@ -127,7 +137,9 @@ class tom_cat (
         service_name        => $service_name,
         tomcat_user         => $tomcat_user,
         tomcat_group        => $tomcat_group,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
+        windows_java_root   => $windows_java_root,
       }
 
       -> class { 'tom_cat::upgrade':
@@ -140,6 +152,7 @@ class tom_cat (
         service_name        => $service_name,
         tomcat_user         => $tomcat_user,
         tomcat_group        => $tomcat_group,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
       }
 
@@ -158,13 +171,16 @@ class tom_cat (
         redirect_port       => $redirect_port,
         admin_user          => $admin_user,
         admin_password      => $admin_password,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
+        windows_java_root   => $windows_java_root,
       }
 
       -> class { 'tom_cat::service':
         service_name        => $service_name,
         tomcat_home         => $tomcat_home,
         install_dir         => $install_dir,
+        windows_tomcat_home => $windows_tomcat_home,
         windows_install_dir => $windows_install_dir,
       }
 

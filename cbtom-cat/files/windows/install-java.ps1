@@ -9,10 +9,13 @@ param(
     [string]$ExtractRoot,
 
     [Parameter(Mandatory = $true)]
-    [string]$InstallDir,
+    [string]$JavaRoot,
 
     [Parameter(Mandatory = $true)]
-    [string]$JavaHome
+    [string]$JavaHome,
+
+    [Parameter(Mandatory = $true)]
+    [string]$JavaLink
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,8 +25,8 @@ if (!(Test-Path 'C:\temp')) {
     New-Item -Path 'C:\temp' -ItemType Directory -Force | Out-Null
 }
 
-if (!(Test-Path $InstallDir)) {
-    New-Item -Path $InstallDir -ItemType Directory -Force | Out-Null
+if (!(Test-Path $JavaRoot)) {
+    New-Item -Path $JavaRoot -ItemType Directory -Force | Out-Null
 }
 
 Invoke-WebRequest -Uri $JavaUrl -OutFile $ZipPath
@@ -44,3 +47,9 @@ if (Test-Path $JavaHome) {
 }
 
 Move-Item -Path $jdkDir.FullName -Destination $JavaHome
+
+if (Test-Path $JavaLink) {
+    Remove-Item -Path $JavaLink -Recurse -Force
+}
+
+New-Item -Path $JavaLink -ItemType Junction -Target $JavaHome -Force | Out-Null
