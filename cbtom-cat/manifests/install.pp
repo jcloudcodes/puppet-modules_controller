@@ -153,6 +153,7 @@ class tom_cat::install (
     $windows_powershell   = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
     $windows_temp         = 'C:/temp'
     $windows_extract_root = 'C:/temp/corretto-extract'
+    $windows_base_dir     = regsubst($windows_tomcat_home, '/[^/]+$', '')
     $windows_corretto_zip = "${windows_temp}/amazon-corretto-${corretto_major_version}-x64-windows-jdk.zip"
     $windows_corretto_dir = "${windows_java_root}/amazon-corretto-${java_version}-windows-x64"
     $windows_java_link    = "${windows_tomcat_home}/tomcat-java"
@@ -162,8 +163,13 @@ class tom_cat::install (
       ensure => directory,
     }
 
-    file { $windows_tomcat_home:
+    file { $windows_base_dir:
       ensure => directory,
+    }
+
+    file { $windows_tomcat_home:
+      ensure  => directory,
+      require => File[$windows_base_dir],
     }
 
     file { $windows_install_dir:
