@@ -1,0 +1,6 @@
+export JENKINS_CONTROLLER_HOST="<%= $controller_host %>"
+export JENKINS_AGENT_NAME="<%= $agent_name %>"
+export JENKINS_AGENT_LABELS="<%= $agent_labels %>"
+export JENKINS_AGENT_WORKDIR="<%= $agent_workdir %>"
+export JAVA_HOME="<%= $java_link %>"
+export PATH="<%= $java_link %>/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

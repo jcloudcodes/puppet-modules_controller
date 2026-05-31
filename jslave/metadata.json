@@ -1,0 +1,14 @@
+{
+  "name": "jcloudcodes-jslave",
+  "version": "0.1.0",
+  "author": "OpenAI",
+  "summary": "Manage a Jenkins inbound agent on Linux",
+  "license": "Apache-2.0",
+  "source": "https://github.com/jcloudcodes/puppet-modules",
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_requirement": ">= 8.0.0 < 10.0.0"
+    }
+  ]
+}
