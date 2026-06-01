@@ -9,6 +9,7 @@ class jslave (
   $agent_workdir    = lookup('jslave::agent_workdir')
   $agent_home       = lookup('jslave::agent_home')
   $java_root        = lookup('jslave::java_root')
+  $authorization_root = lookup('jslave::authorization_root')
   $controller_host  = lookup('jslave::controller_host')
   $nginx_server_name = lookup('jslave::nginx_server_name', { 'default_value' => 'jslave.jcloudcodes.com' })
   $resolved_name    = lookup('jslave::agent_name')
@@ -20,6 +21,7 @@ class jslave (
       agent_root    => $agent_root,
       agent_home    => $agent_home,
       java_root     => $java_root,
+      authorization_root => $authorization_root,
       agent_user    => $agent_user,
       agent_group   => $agent_group,
       nginx_server_name => $nginx_server_name,
@@ -53,6 +55,7 @@ class jslave (
       agent_workdir     => $agent_workdir,
       agent_home        => $agent_home,
       java_root         => $java_root,
+      authorization_root => $authorization_root,
       agent_user        => $agent_user,
       agent_group       => $agent_group,
     }

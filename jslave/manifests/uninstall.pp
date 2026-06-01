@@ -2,6 +2,7 @@ class jslave::uninstall (
   String $agent_root,
   String $agent_home,
   String $java_root,
+  String $authorization_root,
   String $agent_user,
   String $agent_group,
   String $nginx_server_name,
@@ -25,6 +26,12 @@ class jslave::uninstall (
 
   file { $agent_home:
     ensure => absent,
+    recurse => true,
+    force   => true,
+  }
+
+  file { $authorization_root:
+    ensure  => absent,
     recurse => true,
     force   => true,
   }

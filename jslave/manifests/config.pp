@@ -8,6 +8,7 @@ class jslave::config (
   String $agent_workdir,
   String $agent_home,
   String $java_root,
+  String $authorization_root,
   String $agent_user,
   String $agent_group,
 ) {
@@ -19,6 +20,7 @@ class jslave::config (
   $corretto_home    = "${java_root}/amazon-corretto-${java_version}-linux-x64"
   $java_link        = "${agent_root}/jenkins-java"
   $ssh_dir          = "${agent_home}/.ssh"
+  $authorization_dir = "${authorization_root}/.ssh"
   $profile_script   = '/etc/profile.d/jenkins-agent.sh'
 
   file { $agent_workdir:
@@ -35,22 +37,39 @@ class jslave::config (
     require => Class['jslave::install'],
   }
 
-  file { $ssh_dir:
+  file { $authorization_root:
+    ensure  => directory,
+    owner   => $agent_user,
+    group   => $agent_group,
+    mode    => '0755',
+    require => Class['jslave::install'],
+  }
+
+  file { $authorization_dir:
     ensure  => directory,
     owner   => $agent_user,
     group   => $agent_group,
     mode    => '0700',
-    require => Class['jslave::install'],
+    require => File[$authorization_root],
   }
 
-  file { "${ssh_dir}/authorized_keys":
+  file { $ssh_dir:
+    ensure  => link,
+    target  => $authorization_dir,
+    require => [
+      File[$authorization_dir],
+      User[$agent_user],
+    ],
+  }
+
+  file { "${authorization_dir}/authorized_keys":
     ensure  => file,
     owner   => $agent_user,
     group   => $agent_group,
     mode    => '0600',
     content => "${ssh_public_key}\n",
     require => [
-      File[$ssh_dir],
+      File[$authorization_dir],
       User[$agent_user],
     ],
   }

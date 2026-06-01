@@ -38,6 +38,9 @@ This module manages a Jenkins Linux inbound agent with:
 - Agent workdir: `/jcloudcodes/jslave/data`
 - Java root: `/jcloudcodes/jslave-java`
 - Java symlink used by the agent: `/jcloudcodes/jslave/jenkins-java`
+- Authorized keys root: `/jcloudcodes/customer-authorization`
+- Real authorized keys directory: `/jcloudcodes/customer-authorization/.ssh`
+- Real authorized keys file: `/jcloudcodes/customer-authorization/.ssh/authorized_keys`
 - Agent home: `/home/jenkins`
 
 ### Required Console Parameters
@@ -58,10 +61,22 @@ All other agent values are resolved from Hiera:
 
 ### Configure Slave SSH Key with Eyaml
 
-The `jslave` module installs the Jenkins controller public key into:
+The `jslave` module stores the Jenkins controller public key in:
 
 ```text
-/home/jenkins/.ssh/authorized_keys
+/jcloudcodes/customer-authorization/.ssh/authorized_keys
+```
+
+To keep standard SSH login behavior, the module also makes:
+
+```text
+/home/jenkins/.ssh
+```
+
+point to:
+
+```text
+/jcloudcodes/customer-authorization/.ssh
 ```
 
 That value should be stored in:
@@ -119,7 +134,8 @@ puppet agent -t
 Validate that the public key was installed:
 
 ```bash
-cat /home/jenkins/.ssh/authorized_keys
+cat /jcloudcodes/customer-authorization/.ssh/authorized_keys
+ls -ld /home/jenkins/.ssh
 ```
 
 That file should contain the same controller public key from:
@@ -135,7 +151,8 @@ systemctl status sshd
 systemctl status nginx
 ls -l /jcloudcodes/jslave
 ls -l /jcloudcodes/jslave-java
-cat /home/jenkins/.ssh/authorized_keys
+cat /jcloudcodes/customer-authorization/.ssh/authorized_keys
+ls -ld /home/jenkins/.ssh
 cat /jslave/jslave-nginx.conf.epp
 curl -I http://jslave.jcloudcodes.com/healthz
 su - jenkins -s /bin/bash -c '/jcloudcodes/jslave/jenkins-java/bin/java -version'
