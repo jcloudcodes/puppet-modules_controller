@@ -56,6 +56,78 @@ All other agent values are resolved from Hiera:
 - `jslave::agent_labels`
 - `jslave::ssh_public_key`
 
+### Configure Slave SSH Key with Eyaml
+
+The `jslave` module installs the Jenkins controller public key into:
+
+```text
+/home/jenkins/.ssh/authorized_keys
+```
+
+That value should be stored in:
+
+- [common.eyaml](/Users/makutaworldmpm/Desktop/eagunu_2025/jcloudcodes/programming/infra_coding/puppet-modules/jslave/data/common.eyaml)
+
+The source public key comes from the Jenkins controller custom key path:
+
+```bash
+cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
+```
+
+Example public key:
+
+```text
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAmyc01CD+cgNthDdg+u92QujW2sb4V6QKioKcZVccaL jenkins@jenkins
+```
+
+Encrypt it on the Puppet server with the eyaml public key:
+
+```bash
+/usr/local/bin/eyaml encrypt \
+  -s 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAmyc01CD+cgNthDdg+u92QujW2sb4V6QKioKcZVccaL jenkins@jenkins' \
+  --pkcs7-public-key /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem
+```
+
+Take the `block: >` output and store it in:
+
+```yaml
+jslave::ssh_public_key: >
+  ENC[PKCS7,...]
+```
+
+Example file target:
+
+- [common.eyaml](/Users/makutaworldmpm/Desktop/eagunu_2025/jcloudcodes/programming/infra_coding/puppet-modules/jslave/data/common.eyaml)
+
+Verify decryption on the Puppet server before running the agent:
+
+```bash
+sudo /usr/local/bin/eyaml decrypt \
+  --pkcs7-private-key /etc/puppetlabs/puppet/eyaml/private_key.pkcs7.pem \
+  --pkcs7-public-key /etc/puppetlabs/puppet/eyaml/public_key.pkcs7.pem \
+  -f /etc/puppetlabs/code/environments/production/modules/jslave/data/common.eyaml
+```
+
+It should print the original SSH public key line.
+
+Then run Puppet on the slave host:
+
+```bash
+puppet agent -t
+```
+
+Validate that the public key was installed:
+
+```bash
+cat /home/jenkins/.ssh/authorized_keys
+```
+
+That file should contain the same controller public key from:
+
+```text
+/jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
+```
+
 ### Validation Commands
 
 ```bash
