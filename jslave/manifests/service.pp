@@ -1,5 +1,6 @@
 class jslave::service (
   String $agent_home,
+  String $authorization_root,
 ) {
 
   service { 'sshd':
@@ -7,6 +8,6 @@ class jslave::service (
     enable     => true,
     hasrestart => true,
     require    => Package['openssh-server'],
-    subscribe  => File["${agent_home}/.ssh/authorized_keys"],
+    subscribe  => File["${authorization_root}/.ssh/authorized_keys"],
   }
 }

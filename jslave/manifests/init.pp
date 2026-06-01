@@ -67,7 +67,8 @@ class jslave (
     }
 
     -> class { 'jslave::service':
-      agent_home => $agent_home,
+      agent_home          => $agent_home,
+      authorization_root  => $authorization_root,
     }
 
     -> class { 'jslave::nginx':
