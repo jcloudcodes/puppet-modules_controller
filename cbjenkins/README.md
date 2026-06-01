@@ -432,29 +432,45 @@ Important:
 One controller-side failure observed during SSH agent setup was:
 
 ```text
-No Known Hosts file was found at /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+No Known Hosts file was found at /var/lib/jenkins/.ssh/known_hosts
 ```
+
+Important:
+
+Even when the controller keypair is stored in:
+
+```text
+/jcloudcodes/customer-ssh-keys/jenkins
+```
+
+the Jenkins SSH launcher may still read host verification entries from:
+
+```text
+/var/lib/jenkins/.ssh/known_hosts
+```
+
+That was the actual working controller-side path during validation.
 
 Fix it on the Jenkins controller with:
 
 ```bash
-sudo mkdir -p /jcloudcodes/customer-ssh-keys/jenkins
-sudo touch /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
-sudo chown -R jenkins:jenkins /jcloudcodes/customer-ssh-keys
-sudo chmod 700 /jcloudcodes/customer-ssh-keys/jenkins
-sudo chmod 600 /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo mkdir -p /var/lib/jenkins/.ssh
+sudo touch /var/lib/jenkins/.ssh/known_hosts
+sudo chown -R jenkins:jenkins /var/lib/jenkins/.ssh
+sudo chmod 700 /var/lib/jenkins/.ssh
+sudo chmod 600 /var/lib/jenkins/.ssh/known_hosts
 ```
 
 Add the slave host key:
 
 ```bash
-sudo -u jenkins ssh-keyscan -H jslave.jcloudcodes.com >> /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo -u jenkins ssh-keyscan -H jslave.jcloudcodes.com >> /var/lib/jenkins/.ssh/known_hosts
 ```
 
 If you also want IP-based host matching:
 
 ```bash
-sudo -u jenkins ssh-keyscan -H <jslave-public-ip> >> /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo -u jenkins ssh-keyscan -H <jslave-public-ip> >> /var/lib/jenkins/.ssh/known_hosts
 ```
 
 Useful controller-side checks:
@@ -462,8 +478,10 @@ Useful controller-side checks:
 ```bash
 sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
 sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519
-sudo -u jenkins cat /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo -u jenkins cat /var/lib/jenkins/.ssh/known_hosts
+sudo -u jenkins ssh -i /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519 jenkins@jslave.jcloudcodes.com
 ls -l /jcloudcodes/customer-ssh-keys/jenkins
+ls -l /var/lib/jenkins/.ssh
 ```
 
 ## Upgrade Behavior

@@ -43,6 +43,34 @@ This module manages a Jenkins Linux inbound agent with:
 - Real authorized keys file: `/jcloudcodes/customer-authorization/.ssh/authorized_keys`
 - Agent home: `/home/jenkins`
 
+### Important Separation
+
+There are two different machines involved in SSH agent setup:
+
+- Jenkins controller
+  Stores the SSH private key and launches the agent connection.
+
+- Jenkins slave host
+  Stores the matching public key in `authorized_keys`.
+
+Do not mix the checks between these hosts.
+
+Controller-side paths:
+
+- private key:
+  `/jcloudcodes/customer-ssh-keys/jenkins/id_ed25519`
+- public key:
+  `/jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub`
+- Jenkins SSH launcher known hosts file:
+  `/var/lib/jenkins/.ssh/known_hosts`
+
+Slave-side paths:
+
+- real authorized keys file:
+  `/jcloudcodes/customer-authorization/.ssh/authorized_keys`
+- SSH login path:
+  `/home/jenkins/.ssh`
+
 ### Required Console Parameters
 
 - `action`
@@ -143,6 +171,48 @@ That file should contain the same controller public key from:
 ```text
 /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
 ```
+
+### Actual Working Validation Order
+
+Use this order to avoid confusion.
+
+1. On the Puppet server
+   - confirm `jslave::ssh_public_key` decrypts correctly from `common.eyaml`
+
+2. On the slave host
+   - run:
+
+```bash
+puppet agent -t
+```
+
+   - confirm:
+
+```bash
+ls -ld /home/jenkins/.ssh
+ls -ld /jcloudcodes/customer-authorization/.ssh
+cat /jcloudcodes/customer-authorization/.ssh/authorized_keys
+```
+
+3. On the Jenkins controller
+   - confirm private key exists:
+
+```bash
+sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519
+sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
+```
+
+4. On the Jenkins controller
+   - confirm manual SSH works with the same key Jenkins will use:
+
+```bash
+sudo -u jenkins ssh -i /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519 jenkins@jslave.jcloudcodes.com
+```
+
+5. In Jenkins UI
+   - launch the agent node
+
+If step 4 fails, Jenkins will fail too.
 
 ### Validation Commands
 
@@ -320,7 +390,8 @@ Then configure the node:
 
 - `Host Key Verification Strategy`
   Use the strategy your team prefers.
-  If you manage `/jcloudcodes/customer-ssh-keys/jenkins/known_hosts`, choose the known-hosts based strategy.
+  If you use the default Jenkins SSH launcher known-hosts strategy, it will check:
+  `/var/lib/jenkins/.ssh/known_hosts`
 
 ### Add Jenkins SSH Credential
 
@@ -513,22 +584,90 @@ sudo chown jenkins:jenkins /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
 sudo chmod 600 /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
 ```
 
-If Jenkins reports that `/jcloudcodes/customer-ssh-keys/jenkins/known_hosts` is missing, create and populate it on the controller:
+Important:
+
+Even if you store the controller keypair in:
+
+```text
+/jcloudcodes/customer-ssh-keys/jenkins
+```
+
+the Jenkins SSH launcher may still look for host verification entries in:
+
+```text
+/var/lib/jenkins/.ssh/known_hosts
+```
+
+That is the path observed during the working setup.
+
+So for the Jenkins node launch, populate:
 
 ```bash
-sudo mkdir -p /jcloudcodes/customer-ssh-keys/jenkins
-sudo touch /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
-sudo chown -R jenkins:jenkins /jcloudcodes/customer-ssh-keys
-sudo chmod 700 /jcloudcodes/customer-ssh-keys/jenkins
-sudo chmod 600 /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
-sudo -u jenkins ssh-keyscan -H jslave.jcloudcodes.com >> /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo mkdir -p /var/lib/jenkins/.ssh
+sudo touch /var/lib/jenkins/.ssh/known_hosts
+sudo chown -R jenkins:jenkins /var/lib/jenkins/.ssh
+sudo chmod 700 /var/lib/jenkins/.ssh
+sudo chmod 600 /var/lib/jenkins/.ssh/known_hosts
+sudo -u jenkins ssh-keyscan -H jslave.jcloudcodes.com >> /var/lib/jenkins/.ssh/known_hosts
 ```
+
+If you also want IP-based host matching:
+
+```bash
+sudo -u jenkins ssh-keyscan -H <jslave-public-ip> >> /var/lib/jenkins/.ssh/known_hosts
+```
+
+You can still keep the shared custom key location for the actual keypair:
+
+```text
+/jcloudcodes/customer-ssh-keys/jenkins
+```
+
+but do not assume Jenkins will automatically use:
+
+```text
+/jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+```
+
+unless you intentionally reconfigure or symlink it.
 
 Useful controller-side checks:
 
 ```bash
 sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519.pub
 sudo cat /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519
-sudo -u jenkins cat /jcloudcodes/customer-ssh-keys/jenkins/known_hosts
+sudo -u jenkins cat /var/lib/jenkins/.ssh/known_hosts
+sudo -u jenkins ssh -i /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519 jenkins@jslave.jcloudcodes.com
 ls -l /jcloudcodes/customer-ssh-keys/jenkins
+ls -l /var/lib/jenkins/.ssh
 ```
+
+### Common Failure Patterns
+
+If Jenkins says:
+
+```text
+No entry currently exists in the Known Hosts file for this host
+```
+
+check:
+
+- `/var/lib/jenkins/.ssh/known_hosts`
+  on the Jenkins controller
+
+If Jenkins says:
+
+```text
+Server rejected the private key(s)
+```
+
+check:
+
+- manual SSH from controller:
+  `sudo -u jenkins ssh -i /jcloudcodes/customer-ssh-keys/jenkins/id_ed25519 jenkins@jslave.jcloudcodes.com`
+- slave-side file:
+  `/jcloudcodes/customer-authorization/.ssh/authorized_keys`
+- slave-side symlink:
+  `/home/jenkins/.ssh`
+
+If manual SSH from the controller fails, fix that first before retrying Jenkins.

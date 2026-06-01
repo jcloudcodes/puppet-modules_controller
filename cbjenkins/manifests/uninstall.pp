@@ -11,6 +11,7 @@ class jenkins_master::uninstall (
 
   $jenkins_root      = '/jcloudcodes/cbjenkins'
   $jenkins_java_root = '/jcloudcodes/cbjenkins-java'
+  $jenkins_ssh_root  = '/jcloudcodes/customer-ssh-keys'
 
   #notify { 'jenkins_master::uninstall loaded': }
 
@@ -149,13 +150,23 @@ class jenkins_master::uninstall (
       recurse => true,
       require => Package[$jenkins_package],
     }
+
+    file { $jenkins_ssh_root:
+      ensure  => absent,
+      force   => true,
+      recurse => true,
+      require => Package[$jenkins_package],
+    }
+
     file { '/jcloudcodes':
-    ensure  => absent,
-    force   => true,
-    recurse => true,
-    require => [File[$jenkins_java_root],
-    ],
-  }
+      ensure  => absent,
+      force   => true,
+      recurse => true,
+      require => [
+        File[$jenkins_java_root],
+        File[$jenkins_ssh_root],
+      ],
+    }
   }
   # Remove Git and perl-Git together in one transaction to avoid the
   # RPM dependency loop between the two packages.
