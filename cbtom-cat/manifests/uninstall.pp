@@ -114,10 +114,18 @@ class tom_cat::uninstall (
   } elsif $facts['kernel'] == 'windows' {
 
     $windows_powershell = 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+    $windows_nginx_home = lookup('tom_cat::windows_nginx_home', { 'default_value' => 'C:/jcloudcodes/cbtom-nginx' })
+    $windows_nginx_task_name = lookup('tom_cat::windows_nginx_task_name', { 'default_value' => 'tomcat-nginx' })
+
+    exec { 'remove_windows_nginx':
+      command   => "${windows_powershell} -NoProfile -Command \"if (Get-Process -Name nginx -ErrorAction SilentlyContinue) { & '${windows_nginx_home}/nginx.exe' -p '${windows_nginx_home}' -s quit; Start-Sleep -Seconds 3 }; if (Get-ScheduledTask -TaskName '${windows_nginx_task_name}' -ErrorAction SilentlyContinue) { Unregister-ScheduledTask -TaskName '${windows_nginx_task_name}' -Confirm:\$false }; if (Get-NetFirewallRule -DisplayName 'Tomcat Nginx HTTP' -ErrorAction SilentlyContinue) { Remove-NetFirewallRule -DisplayName 'Tomcat Nginx HTTP' }\"",
+      logoutput => true,
+    }
 
     exec { 'remove_windows_service':
       command   => "${windows_powershell} -Command \"if (Get-Service -Name '${service_name}' -ErrorAction SilentlyContinue) { Stop-Service -Name '${service_name}' -Force; sc.exe delete ${service_name} }\"",
       logoutput => true,
+      require   => Exec['remove_windows_nginx'],
     }
 
     file { $windows_tomcat_home:
@@ -132,6 +140,13 @@ class tom_cat::uninstall (
       recurse => true,
       force   => true,
       require => Exec['remove_windows_service'],
+    }
+
+    file { $windows_nginx_home:
+      ensure  => absent,
+      recurse => true,
+      force   => true,
+      require => Exec['remove_windows_nginx'],
     }
 
   } else {

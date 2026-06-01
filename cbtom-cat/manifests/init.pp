@@ -156,6 +156,11 @@ class tom_cat (
         windows_java_root   => $windows_java_root,
       }
 
+      -> class { 'tom_cat::nginx':
+        server_name => $nginx_server_name,
+        tomcat_port => "${connector_port}",
+      }
+
       -> class { 'tom_cat::config':
         environment         => $environment,
         tom_version         => $tom_version,
@@ -184,8 +189,9 @@ class tom_cat (
         windows_install_dir => $windows_install_dir,
       }
 
-      contain tom_cat::upgrade
       contain tom_cat::install
+      contain tom_cat::upgrade
+      contain tom_cat::nginx
       contain tom_cat::config
       contain tom_cat::service
 

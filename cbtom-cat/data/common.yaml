@@ -9,6 +9,9 @@ tom_cat::tomcat_group: 'tomcat'
 tom_cat::windows_tomcat_home: 'C:/jcloudcodes/cbtom-cat'
 tom_cat::windows_install_dir: 'C:/jcloudcodes/cbtom-cat/data'
 tom_cat::windows_java_root: 'C:/jcloudcodes/cbtomcat-java'
+tom_cat::windows_nginx_home: 'C:/jcloudcodes/cbtom-nginx'
+tom_cat::windows_nginx_version: '1.28.0'
+tom_cat::windows_nginx_task_name: 'tomcat-nginx'
 tom_cat::shutdown_port: 8005
 tom_cat::connector_port: 8085
 tom_cat::redirect_port: 8443
