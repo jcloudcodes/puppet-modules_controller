@@ -1,6 +1,6 @@
-# Puppet Modules
+# puppet-modules_controller
 
-This repository contains Puppet modules used to build and manage the `jcloudcodes.com` lab environment through Puppet and Foreman.
+This repository contains the Puppet controller repo used to build and manage the `jcloudcodes.com` lab environment through Puppet and Foreman.
 
 The current modules cover:
 
@@ -14,23 +14,25 @@ The repository also includes GitHub Actions deployment workflows and remote vali
 ## Repository Layout
 
 ```text
-puppet-modules/
+puppet-modules_controller/
 ├── .github/workflows/
 │   ├── deploy-jenkins-master.yml
 │   ├── deploy-jslave.yml
 │   └── deploy-tomcat.yml
-├── cbjenkins/
-├── cbtom-cat/
 ├── ci-cd/
 │   ├── cbjenkins/
 │   ├── cbtom-cat/
 │   └── jslave/
-└── jslave/
+├── puppet-modules_packagings/
+│   ├── cbjenkins/
+│   └── cbtom-cat/
+└── puppet-modules_infra/
+    └── jslave/
 ```
 
 ## Modules
 
-### `cbjenkins`
+### `puppet-modules_packagings/cbjenkins`
 
 Manages a Jenkins controller on Linux with:
 
@@ -53,7 +55,7 @@ Top-level Puppet class:
 
 - `cb_jenkins`
 
-### `cbtom-cat`
+### `puppet-modules_packagings/cbtom-cat`
 
 Manages Tomcat on Linux and Windows with:
 
@@ -77,7 +79,7 @@ Top-level Puppet class:
 
 - `tom_cat`
 
-### `jslave`
+### `puppet-modules_infra/jslave`
 
 Manages a Jenkins SSH agent host with:
 
@@ -106,7 +108,7 @@ This repository does not use one standalone shared Nginx module. Instead, Nginx 
 
 Managed by:
 
-- `cbjenkins/manifests/nginx.pp`
+- `puppet-modules_packagings/cbjenkins/manifests/nginx.pp`
 
 Purpose:
 
@@ -119,7 +121,7 @@ Purpose:
 
 Managed by:
 
-- `cbtom-cat/manifests/nginx.pp`
+- `puppet-modules_packagings/cbtom-cat/manifests/nginx.pp`
 
 Purpose:
 
@@ -132,7 +134,7 @@ Purpose:
 
 Managed by:
 
-- `jslave/manifests/nginx.pp`
+- `puppet-modules_infra/jslave/manifests/nginx.pp`
 
 Purpose:
 

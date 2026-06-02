@@ -6,7 +6,7 @@ on:
       - main
       - master
     paths:
-      - 'cbtom-cat/**'
+      - 'puppet-modules_packagings/cbtom-cat/**'
       - '.github/workflows/deploy-tomcat.yml'
       - 'ci-cd/cbtom-cat/deploy_tomcat.sh'
   workflow_dispatch:
@@ -21,19 +21,19 @@ jobs:
 
       - name: Verify module path exists
         run: |
-          test -d cbtom-cat
+          test -d puppet-modules_packagings/cbtom-cat
 
       - name: Show commit details
         run: |
           git rev-parse HEAD
-          git log -1 --stat -- cbtom-cat
+          git log -1 --stat -- puppet-modules_packagings/cbtom-cat
 
   validate:
     name: Validate Puppet Module
     runs-on: ubuntu-latest
     needs: git-check
     env:
-      MODULE_SOURCE: cbtom-cat
+      MODULE_SOURCE: puppet-modules_packagings/cbtom-cat
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-remote
     env:
-      MODULE_SOURCE: cbtom-cat
+      MODULE_SOURCE: puppet-modules_packagings/cbtom-cat
       REMOTE_HOST: puppet.jcloudcodes.com
       REMOTE_USER: ${{ secrets.PUPPET_FOREMAN_USER }}
       REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/tom_cat

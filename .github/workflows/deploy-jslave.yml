@@ -6,7 +6,7 @@ on:
       - main
       - master
     paths:
-      - 'jslave/**'
+      - 'puppet-modules_infra/jslave/**'
       - '.github/workflows/deploy-jslave.yml'
       - 'ci-cd/jslave/deploy_jslave.sh'
   workflow_dispatch:
@@ -21,19 +21,19 @@ jobs:
 
       - name: Verify module path exists
         run: |
-          test -d jslave
+          test -d puppet-modules_infra/jslave
 
       - name: Show commit details
         run: |
           git rev-parse HEAD
-          git log -1 --stat -- jslave
+          git log -1 --stat -- puppet-modules_infra/jslave
 
   validate:
     name: Validate Puppet Module
     runs-on: ubuntu-latest
     needs: git-check
     env:
-      MODULE_SOURCE: jslave
+      MODULE_SOURCE: puppet-modules_infra/jslave
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare-remote
     env:
-      MODULE_SOURCE: jslave
+      MODULE_SOURCE: puppet-modules_infra/jslave
       REMOTE_HOST: puppet.jcloudcodes.com
       REMOTE_USER: ${{ secrets.PUPPET_FOREMAN_USER }}
       REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/jslave
