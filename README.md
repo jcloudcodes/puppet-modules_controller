@@ -20,9 +20,12 @@ puppet-modules_controller/
 │   ├── deploy-jslave.yml
 │   └── deploy-tomcat.yml
 ├── ci-cd/
-│   ├── cbjenkins/
-│   ├── cbtom-cat/
-│   └── jslave/
+│   ├── github_action/
+│   │   ├── cbjenkins/
+│   │   ├── cbtom-cat/
+│   │   └── jslave/
+│   ├── gitlab-ci/
+│   └── jenkins-pipeline/
 ├── puppet-modules_packagings/
 │   ├── cbjenkins/
 │   └── cbtom-cat/
@@ -428,9 +431,9 @@ Current workflows:
 
 Remote validation scripts:
 
-- `ci-cd/cbjenkins/deploy_cb_jenkins.sh`
-- `ci-cd/cbtom-cat/deploy_tomcat.sh`
-- `ci-cd/jslave/deploy_jslave.sh`
+- `ci-cd/github_action/cbjenkins/deploy_cb_jenkins.sh`
+- `ci-cd/github_action/cbtom-cat/deploy_tomcat.sh`
+- `ci-cd/github_action/jslave/deploy_jslave.sh`
 
 ## Operational Notes
 
