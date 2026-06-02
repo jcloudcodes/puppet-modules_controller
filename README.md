@@ -25,7 +25,9 @@ puppet-modules_controller/
 │   │   ├── cbtom-cat/
 │   │   └── jslave/
 │   ├── gitlab-ci/
+│   │   └── deploy_module.sh
 │   └── jenkins-pipeline/
+│       └── Jenkinsfile
 ├── puppet-modules_packagings/
 │   ├── cbjenkins/
 │   └── cbtom-cat/
@@ -434,6 +436,32 @@ Remote validation scripts:
 - `ci-cd/github_action/cbjenkins/deploy_cb_jenkins.sh`
 - `ci-cd/github_action/cbtom-cat/deploy_tomcat.sh`
 - `ci-cd/github_action/jslave/deploy_jslave.sh`
+
+## GitLab CI Deployment
+
+This repository also includes a GitLab CI entrypoint:
+
+- `.gitlab-ci.yml`
+
+The GitLab pipeline uses a shared helper script:
+
+- `ci-cd/gitlab-ci/deploy_module.sh`
+
+It validates changed modules, prepares the remote Puppet module path, syncs module contents, and then reuses the same remote validation scripts that the GitHub Actions workflows call.
+
+## Jenkins Pipeline Deployment
+
+This repository also includes a Jenkins pipeline entrypoint:
+
+- `ci-cd/jenkins-pipeline/Jenkinsfile`
+
+The Jenkins pipeline lets you choose one module at a time:
+
+- `cb_jenkins`
+- `tom_cat`
+- `jslave`
+
+It reuses the same shared deploy helper and remote validation scripts as the other CI systems.
 
 ## Operational Notes
 
