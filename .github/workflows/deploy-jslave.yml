@@ -8,7 +8,7 @@ on:
     paths:
       - 'puppet-modules_infra/jslave/**'
       - '.github/workflows/deploy-jslave.yml'
-      - 'ci-cd/jslave/deploy_jslave.sh'
+      - 'ci-cd/github_action/jslave/deploy_jslave.sh'
   workflow_dispatch:
 
 jobs:
@@ -112,7 +112,7 @@ jobs:
       - name: Copy remote deployment script
         run: |
           rsync -az \
-            "ci-cd/jslave/deploy_jslave.sh" \
+            "ci-cd/github_action/jslave/deploy_jslave.sh" \
             "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_jslave.sh"
 
       - name: Run remote deployment validation

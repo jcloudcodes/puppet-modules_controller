@@ -8,7 +8,7 @@ on:
     paths:
       - 'puppet-modules_packagings/cbjenkins/**'
       - '.github/workflows/deploy-jenkins-master.yml'
-      - 'ci-cd/cbjenkins/deploy_cb_jenkins.sh'
+      - 'ci-cd/github_action/cbjenkins/deploy_cb_jenkins.sh'
   workflow_dispatch:
 
 jobs:
@@ -91,7 +91,7 @@ jobs:
       - name: Copy remote deployment script
         run: |
           rsync -az \
-            "ci-cd/cbjenkins/deploy_cb_jenkins.sh" \
+            "ci-cd/github_action/cbjenkins/deploy_cb_jenkins.sh" \
             "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_cb_jenkins.sh"
 
       - name: Run remote deployment validation
