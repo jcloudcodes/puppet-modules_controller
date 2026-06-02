@@ -1,0 +1,91 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  parameters {
+    choice(
+      name: 'MODULE_NAME',
+      choices: ['cb_jenkins', 'tom_cat', 'jslave'],
+      description: 'Select the Puppet module to validate and deploy.'
+    )
+  }
+
+  environment {
+    REMOTE_HOST = 'puppet.jcloudcodes.com'
+  }
+
+  stages {
+    stage('Resolve Module Paths') {
+      steps {
+        script {
+          def moduleMap = [
+            'cb_jenkins': [
+              source: 'puppet-modules_packagings/cbjenkins',
+              remotePath: '/etc/puppetlabs/code/environments/production/modules/cb_jenkins',
+              validationScript: 'ci-cd/github_action/cbjenkins/deploy_cb_jenkins.sh',
+            ],
+            'tom_cat': [
+              source: 'puppet-modules_packagings/cbtom-cat',
+              remotePath: '/etc/puppetlabs/code/environments/production/modules/tom_cat',
+              validationScript: 'ci-cd/github_action/cbtom-cat/deploy_tomcat.sh',
+            ],
+            'jslave': [
+              source: 'puppet-modules_infra/jslave',
+              remotePath: '/etc/puppetlabs/code/environments/production/modules/jslave',
+              validationScript: 'ci-cd/github_action/jslave/deploy_jslave.sh',
+            ],
+          ]
+
+          def selected = moduleMap[params.MODULE_NAME]
+          if (selected == null) {
+            error("Unsupported module: ${params.MODULE_NAME}")
+          }
+
+          env.MODULE_SOURCE = selected.source
+          env.REMOTE_PATH = selected.remotePath
+          env.REMOTE_VALIDATION_SCRIPT = selected.validationScript
+        }
+      }
+    }
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Validate Module') {
+      steps {
+        sh '''
+          test -f "$MODULE_SOURCE/manifests/init.pp"
+          test -f "$MODULE_SOURCE/manifests/install.pp"
+          find "$MODULE_SOURCE/manifests" -name '*.pp' -print
+        '''
+      }
+    }
+
+    stage('Deploy Module') {
+      steps {
+        sshagent(credentials: ['puppet-foreman-ssh']) {
+          withCredentials([string(credentialsId: 'puppet-foreman-user', variable: 'PUPPET_FOREMAN_USER')]) {
+            sh '''
+              install -m 700 -d ~/.ssh
+              ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+              bash ci-cd/gitlab-ci/deploy_module.sh \
+                "$MODULE_SOURCE" \
+                "$REMOTE_PATH" \
+                "$PUPPET_FOREMAN_USER" \
+                "$REMOTE_HOST" \
+                "$REMOTE_VALIDATION_SCRIPT" \
+                "$BUILD_TAG"
+            '''
+          }
+        }
+      }
+    }
+  }
+}
