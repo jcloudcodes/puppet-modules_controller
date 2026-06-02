@@ -4,7 +4,7 @@
 # Jenkins package is managed only in install.pp.
 # Do not declare Package[$jenkins_package] here.
 
-class jenkins_master::upgrade (
+class cb_jenkins::upgrade (
   String $jenkins_version,
   String $jenkins_package,
   String $service_name,

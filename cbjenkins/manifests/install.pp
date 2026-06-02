@@ -2,7 +2,7 @@
 # Custom Jenkins config, symlink, permissions, and service overrides are handled in config.pp.
 # Jenkins service start/stop is handled in service.pp.
 
-class jenkins_master::install (
+class cb_jenkins::install (
   String $jenkins_version,
   String $corretto_jdk_version,
   String $jenkins_package,

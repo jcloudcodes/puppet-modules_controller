@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODULE_DIR="/etc/puppetlabs/code/environments/production/modules/jenkins_master"
+MODULE_DIR="/etc/puppetlabs/code/environments/production/modules/cb_jenkins"
 
 cd "${MODULE_DIR}"
 
@@ -15,7 +15,7 @@ else
   echo "Remote git revision: unavailable (module path is not a git checkout)"
 fi
 
-echo "Running Puppet validation for jenkins_master..."
+echo "Running Puppet validation for cb_jenkins..."
 
 if command -v puppet >/dev/null 2>&1; then
   puppet parser validate manifests/*.pp
@@ -24,4 +24,4 @@ else
   exit 1
 fi
 
-echo "jenkins_master module deployment completed successfully."
+echo "cb_jenkins module deployment completed successfully."

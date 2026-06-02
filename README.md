@@ -51,7 +51,7 @@ Important runtime paths:
 
 Top-level Puppet class:
 
-- `jenkins_master`
+- `cb_jenkins`
 
 ### `cbtom-cat`
 
@@ -167,13 +167,13 @@ This keeps package installation separate from runtime configuration and makes tr
 
 Only assign the top-level classes in Foreman:
 
-- `jenkins_master`
+- `cb_jenkins`
 - `tom_cat`
 - `jslave`
 
 Do not assign internal child classes such as:
 
-- `jenkins_master::install`
+- `cb_jenkins::install`
 - `tom_cat::config`
 - `jslave::service`
 
@@ -252,9 +252,9 @@ Typical class parameters:
 
 Key Hiera values:
 
-- `jenkins_master::http_port`
-- `jenkins_master::listen_address`
-- `jenkins_master::nginx_server_name`
+- `cb_jenkins::http_port`
+- `cb_jenkins::listen_address`
+- `cb_jenkins::nginx_server_name`
 
 ### Tomcat
 
@@ -426,7 +426,7 @@ Current workflows:
 
 Remote validation scripts:
 
-- `ci-cd/cbjenkins/deploy_jenkins_master.sh`
+- `ci-cd/cbjenkins/deploy_cb_jenkins.sh`
 - `ci-cd/cbtom-cat/deploy_tomcat.sh`
 - `ci-cd/jslave/deploy_jslave.sh`
 

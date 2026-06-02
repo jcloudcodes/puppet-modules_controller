@@ -15,7 +15,7 @@
 # /jcloudcodes/cbjenkins-java
 # are created in install.pp to avoid duplicate File[] declarations.
 
-class jenkins_master::config (
+class cb_jenkins::config (
   String $http_port,
   String $ajp_port,
   String $service_name,
@@ -56,7 +56,7 @@ class jenkins_master::config (
     owner   => $jenkins_user,
     group   => $jenkins_user,
     mode    => '0755',
-    require => Class['jenkins_master::install'],
+    require => Class['cb_jenkins::install'],
   }
 
   # Create Jenkins Java symlink.
@@ -64,7 +64,7 @@ class jenkins_master::config (
   file { $jenkins_java_link:
     ensure  => link,
     target  => $corretto_home,
-    require => Class['jenkins_master::install'],
+    require => Class['cb_jenkins::install'],
   }
 
   # Ensure Jenkins home points to the custom data directory.
@@ -162,15 +162,15 @@ Environment="JENKINS_JAVA_OPTIONS=${je_java_options}"
   }
 
   # Jenkins operational directories that need Jenkins ownership.
-  $jenkins_master_dirs = [
+  $cb_jenkins_dirs = [
     '/var/log/jenkins',
     '/var/cache/jenkins',
   ]
 
   # Ensure Jenkins log/cache directories exist and are owned by Jenkins.
-  $jenkins_master_dirs.each |$jenkins_master_dir| {
+  $cb_jenkins_dirs.each |$cb_jenkins_dir| {
 
-    file { $jenkins_master_dir:
+    file { $cb_jenkins_dir:
       ensure => directory,
       owner  => $jenkins_user,
       group  => $jenkins_user,
@@ -178,26 +178,26 @@ Environment="JENKINS_JAVA_OPTIONS=${je_java_options}"
     }
 
     # Correct owner recursively only when incorrect owner is detected.
-    exec { "Manage ${jenkins_master_dir} owner permissions":
-      command  => "chown -R ${jenkins_user}:${jenkins_user} ${jenkins_master_dir}",
+    exec { "Manage ${cb_jenkins_dir} owner permissions":
+      command  => "chown -R ${jenkins_user}:${jenkins_user} ${cb_jenkins_dir}",
       provider => shell,
-      onlyif   => "test $(find ${jenkins_master_dir} ! -user ${jenkins_user} | wc -l) -gt 0",
-      require  => File[$jenkins_master_dir],
+      onlyif   => "test $(find ${cb_jenkins_dir} ! -user ${jenkins_user} | wc -l) -gt 0",
+      require  => File[$cb_jenkins_dir],
     }
 
     # Correct group recursively only when incorrect group is detected.
-    exec { "Manage ${jenkins_master_dir} group permissions":
-      command  => "chown -R ${jenkins_user}:${jenkins_user} ${jenkins_master_dir}",
+    exec { "Manage ${cb_jenkins_dir} group permissions":
+      command  => "chown -R ${jenkins_user}:${jenkins_user} ${cb_jenkins_dir}",
       provider => shell,
-      onlyif   => "test $(find ${jenkins_master_dir} ! -group ${jenkins_user} | wc -l) -gt 0",
-      require  => File[$jenkins_master_dir],
+      onlyif   => "test $(find ${cb_jenkins_dir} ! -group ${jenkins_user} | wc -l) -gt 0",
+      require  => File[$cb_jenkins_dir],
     }
   }
 
   # Install Jenkins logrotate configuration.
   file { '/etc/logrotate.d/jenkins':
     ensure => file,
-    source => 'puppet:///modules/jenkins_master/jenkins',
+    source => 'puppet:///modules/cb_jenkins/jenkins',
   }
 
   # Install Jenkins Linux limits configuration.
@@ -206,7 +206,7 @@ Environment="JENKINS_JAVA_OPTIONS=${je_java_options}"
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => epp('jenkins_master/jenkins.conf.epp', {
+    content => epp('cb_jenkins/jenkins.conf.epp', {
       'agentname' => $jenkins_user,
     }),
   }
@@ -224,6 +224,6 @@ Environment="JENKINS_JAVA_OPTIONS=${je_java_options}"
   # This allows Jenkins jobs to clone Git repositories and validate SCM URLs from the UI.
   package { 'git':
     ensure  => installed,
-    require => Class['jenkins_master::install'],
+    require => Class['cb_jenkins::install'],
   }
 }

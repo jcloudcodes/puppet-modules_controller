@@ -8,7 +8,7 @@ on:
     paths:
       - 'cbjenkins/**'
       - '.github/workflows/deploy-jenkins-master.yml'
-      - 'ci-cd/cbjenkins/deploy_jenkins_master.sh'
+      - 'ci-cd/cbjenkins/deploy_cb_jenkins.sh'
   workflow_dispatch:
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
       MODULE_SOURCE: cbjenkins
       REMOTE_HOST: puppet.jcloudcodes.com
       REMOTE_USER: ${{ secrets.PUPPET_FOREMAN_USER }}
-      REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/jenkins_master
+      REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/cb_jenkins
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
       MODULE_SOURCE: cbjenkins
       REMOTE_HOST: puppet.jcloudcodes.com
       REMOTE_USER: ${{ secrets.PUPPET_FOREMAN_USER }}
-      REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/jenkins_master
+      REMOTE_PATH: /etc/puppetlabs/code/environments/production/modules/cb_jenkins
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           ssh "${REMOTE_USER}@${REMOTE_HOST}" \
-            "if [ -d ${REMOTE_PATH} ]; then backup_dir=/tmp/jenkins_master_backup_${GITHUB_SHA}_\$(date +%Y%m%d%H%M%S); mkdir -p \"\$backup_dir\"; rsync -az ${REMOTE_PATH}/ \"\$backup_dir\"/; echo \"Backup created at \$backup_dir\"; fi"
+            "if [ -d ${REMOTE_PATH} ]; then backup_dir=/tmp/cb_jenkins_backup_${GITHUB_SHA}_\$(date +%Y%m%d%H%M%S); mkdir -p \"\$backup_dir\"; rsync -az ${REMOTE_PATH}/ \"\$backup_dir\"/; echo \"Backup created at \$backup_dir\"; fi"
 
       - name: Sync Jenkins module to Puppet Foreman
         run: |
@@ -91,12 +91,12 @@ jobs:
       - name: Copy remote deployment script
         run: |
           rsync -az \
-            "ci-cd/cbjenkins/deploy_jenkins_master.sh" \
-            "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_jenkins_master.sh"
+            "ci-cd/cbjenkins/deploy_cb_jenkins.sh" \
+            "${REMOTE_USER}@${REMOTE_HOST}:/tmp/deploy_cb_jenkins.sh"
 
       - name: Run remote deployment validation
         env:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           ssh "${REMOTE_USER}@${REMOTE_HOST}" \
-            "chmod +x /tmp/deploy_jenkins_master.sh && GITHUB_SHA=${GITHUB_SHA} /bin/bash /tmp/deploy_jenkins_master.sh && rm -f /tmp/deploy_jenkins_master.sh"
+            "chmod +x /tmp/deploy_cb_jenkins.sh && GITHUB_SHA=${GITHUB_SHA} /bin/bash /tmp/deploy_cb_jenkins.sh && rm -f /tmp/deploy_cb_jenkins.sh"

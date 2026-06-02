@@ -1,4 +1,4 @@
-## jenkins_master
+## cb_jenkins
 
 This module manages a customized Jenkins controller installation on Linux using Puppet and Foreman.
 
@@ -68,11 +68,11 @@ JENKINS_JAVA_CMD=/jcloudcodes/cbjenkins/jenkins-java/bin/java
 Main install flow:
 
 ```puppet
-Class['jenkins_master::install']
--> Class['jenkins_master::upgrade']
--> Class['jenkins_master::config']
--> Class['jenkins_master::service']
--> Class['jenkins_master::nginx']
+Class['cb_jenkins::install']
+-> Class['cb_jenkins::upgrade']
+-> Class['cb_jenkins::config']
+-> Class['cb_jenkins::service']
+-> Class['cb_jenkins::nginx']
 ```
 
 This keeps responsibilities separated:
@@ -109,19 +109,19 @@ These values are expected from Foreman / console:
 Current defaults from `data/common.yaml`:
 
 ```yaml
-jenkins_master::http_port: '8080'
-jenkins_master::ajp_port: '-1'
-jenkins_master::manage_repo: true
-jenkins_master::manage_java: false
-jenkins_master::service_name: 'jenkins'
-jenkins_master::jenkins_user: 'jenkins'
-jenkins_master::listen_address: '0.0.0.0'
-jenkins_master::jenkins_package: 'jenkins'
-jenkins_master::jenkins_repo_key_id: '14ABFC68'
-jenkins_master::nginx_server_name: 'jenkins.jcloudcodes.com'
-jenkins_master::config_file: '/etc/sysconfig/jenkins'
-jenkins_master::jenkins_repo_baseurl: 'https://pkg.jenkins.io/rpm-stable'
-jenkins_master::jenkins_repo_gpg: 'https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key'
+cb_jenkins::http_port: '8080'
+cb_jenkins::ajp_port: '-1'
+cb_jenkins::manage_repo: true
+cb_jenkins::manage_java: false
+cb_jenkins::service_name: 'jenkins'
+cb_jenkins::jenkins_user: 'jenkins'
+cb_jenkins::listen_address: '0.0.0.0'
+cb_jenkins::jenkins_package: 'jenkins'
+cb_jenkins::jenkins_repo_key_id: '14ABFC68'
+cb_jenkins::nginx_server_name: 'jenkins.jcloudcodes.com'
+cb_jenkins::config_file: '/etc/sysconfig/jenkins'
+cb_jenkins::jenkins_repo_baseurl: 'https://pkg.jenkins.io/rpm-stable'
+cb_jenkins::jenkins_repo_gpg: 'https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key'
 ```
 
 ## Nginx Reverse Proxy

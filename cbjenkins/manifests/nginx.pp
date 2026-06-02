@@ -7,7 +7,7 @@
 # Jenkins listens locally on 8080.
 # NGINX listens on 80 and proxies traffic to Jenkins.
 
-class jenkins_master::nginx (
+class cb_jenkins::nginx (
   String $server_name  = 'jenkins.jcloudcodes.com',
   String $jenkins_port = '8080',
 ) {
@@ -21,7 +21,7 @@ class jenkins_master::nginx (
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => epp('jenkins_master/jenkins-nginx.conf.epp', {
+    content => epp('cb_jenkins/jenkins-nginx.conf.epp', {
       'server_name'  => $server_name,
       'jenkins_port' => $jenkins_port,
     }),

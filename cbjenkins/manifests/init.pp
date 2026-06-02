@@ -2,7 +2,7 @@
 # This module was created by Pipeline
 #
 
-class jenkins_master (
+class cb_jenkins (
   Enum['', 'yes']              $remove_cb_je         = '',
   Enum['yes', 'no']            $manage_tools         = 'no',
   Enum['install', 'uninstall'] $action               = 'install',
@@ -20,30 +20,30 @@ class jenkins_master (
   }
 
   # Values from common.yaml
-  $http_port            = lookup('jenkins_master::http_port')
-  $ajp_port             = lookup('jenkins_master::ajp_port')
-  $service_name         = lookup('jenkins_master::service_name')
-  $jenkins_user         = lookup('jenkins_master::jenkins_user')
-  $listen_address       = lookup('jenkins_master::listen_address')
-  $jenkins_package      = lookup('jenkins_master::jenkins_package')
-  $jenkins_repo_key_id  = lookup('jenkins_master::jenkins_repo_key_id')
-  $config_file          = lookup('jenkins_master::config_file')
-  $jenkins_repo_baseurl = lookup('jenkins_master::jenkins_repo_baseurl')
-  $jenkins_repo_gpg     = lookup('jenkins_master::jenkins_repo_gpg')
-  $nginx_server_name    = lookup('jenkins_master::nginx_server_name', { 'default_value' => 'jenkins.jcloudcodes.com' })
+  $http_port            = lookup('cb_jenkins::http_port')
+  $ajp_port             = lookup('cb_jenkins::ajp_port')
+  $service_name         = lookup('cb_jenkins::service_name')
+  $jenkins_user         = lookup('cb_jenkins::jenkins_user')
+  $listen_address       = lookup('cb_jenkins::listen_address')
+  $jenkins_package      = lookup('cb_jenkins::jenkins_package')
+  $jenkins_repo_key_id  = lookup('cb_jenkins::jenkins_repo_key_id')
+  $config_file          = lookup('cb_jenkins::config_file')
+  $jenkins_repo_baseurl = lookup('cb_jenkins::jenkins_repo_baseurl')
+  $jenkins_repo_gpg     = lookup('cb_jenkins::jenkins_repo_gpg')
+  $nginx_server_name    = lookup('cb_jenkins::nginx_server_name', { 'default_value' => 'jenkins.jcloudcodes.com' })
 
   if $action == 'uninstall' {
 
-  class { 'jenkins_master::uninstall':
+  class { 'cb_jenkins::uninstall':
     service_name    => $service_name,
     jenkins_package => $jenkins_package,
     config_file     => $config_file,
     remove_cb_je    => $remove_cb_je,
   }
-  contain jenkins_master::uninstall
+  contain cb_jenkins::uninstall
   } elsif $action == 'install' {
 
-    class { 'jenkins_master::install':
+    class { 'cb_jenkins::install':
       jenkins_version      => $jenkins_version,
       corretto_jdk_version => $corretto_jdk_version,
       jenkins_package      => $jenkins_package,
@@ -52,13 +52,13 @@ class jenkins_master (
       jenkins_repo_key_id  => $jenkins_repo_key_id,
     }
 
-    -> class { 'jenkins_master::upgrade':
+    -> class { 'cb_jenkins::upgrade':
       jenkins_version => $jenkins_version,
       jenkins_package => $jenkins_package,
       service_name    => $service_name,
     }
 
-    -> class { 'jenkins_master::config':
+    -> class { 'cb_jenkins::config':
       http_port            => $http_port,
       ajp_port             => $ajp_port,
       service_name         => $service_name,
@@ -68,20 +68,20 @@ class jenkins_master (
       corretto_jdk_version => $corretto_jdk_version,
     }
 
-    -> class { 'jenkins_master::service':
+    -> class { 'cb_jenkins::service':
       service_name => $service_name,
     }
 
-    -> class { 'jenkins_master::nginx':
+    -> class { 'cb_jenkins::nginx':
       server_name  => $nginx_server_name,
       jenkins_port => $http_port,
     }
 
-    contain jenkins_master::install
-    contain jenkins_master::upgrade
-    contain jenkins_master::config
-    contain jenkins_master::service
-    contain jenkins_master::nginx
+    contain cb_jenkins::install
+    contain cb_jenkins::upgrade
+    contain cb_jenkins::config
+    contain cb_jenkins::service
+    contain cb_jenkins::nginx
 
   } else {
     fail("Unsupported action: ${action}")

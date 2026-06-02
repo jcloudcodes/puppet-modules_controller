@@ -1,4 +1,4 @@
-class jenkins_master::uninstall (
+class cb_jenkins::uninstall (
   String          $service_name,
   String          $jenkins_package,
   String          $config_file,
@@ -13,7 +13,7 @@ class jenkins_master::uninstall (
   $jenkins_java_root = '/jcloudcodes/cbjenkins-java'
   $jenkins_ssh_root  = '/jcloudcodes/customer-ssh-keys'
 
-  #notify { 'jenkins_master::uninstall loaded': }
+  #notify { 'cb_jenkins::uninstall loaded': }
 
   # Stop Jenkins only if the service exists.
   exec { 'stop_jenkins_before_uninstall':
